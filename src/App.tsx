@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SiteHeader } from './components/SiteHeader';
 import { sound } from './utils/sound';
 
@@ -51,6 +51,12 @@ const ASSETS = {
     remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794214486/chibi-idle.webp',
     rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794214486/chibi-idle.webp',
     local: '/assets/aistudio/chibi-idle.webp',
+  },
+  chibiHappy: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794227454/chibi-happy.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794227454/chibi-happy.webp',
+    local: '/assets/aistudio/chibi-happy.webp',
   },
   computer0: {
     remote: `${CLOUDINARY_OPT}/v1794222624/computer-0.webp`,
@@ -209,6 +215,112 @@ export default function App() {
   const [tappedChapter, setTappedChapter] = useState<number | null>(null);
   const [chosenChapter, setChosenChapter] = useState<number | null>(null);
 
+  // Chibi happy interaction & speech bubble state
+  // - happyBlobRef: cached in-memory Blob of chibi-happy.webp so each click creates a fresh
+  //   ObjectURL that starts WebP playback strictly from Frame 0 (0ms) with zero network latency
+  const happyBlobRef = useRef<Blob | null>(null);
+  const activeObjectUrlRef = useRef<string | null>(null);
+  const [happyPlaySrc, setHappyPlaySrc] = useState<string | null>(null);
+  const [happyPlayKey, setHappyPlayKey] = useState<number>(0);
+  const [isIdleMasked, setIsIdleMasked] = useState<boolean>(false);
+  const [showSpeechBubble, setShowSpeechBubble] = useState<boolean>(false);
+
+  const revealIdleTimerRef = useRef<number | null>(null);
+  const hideHappyTimerRef = useRef<number | null>(null);
+
+  const clearChibiTimers = useCallback(() => {
+    if (revealIdleTimerRef.current !== null) {
+      window.clearTimeout(revealIdleTimerRef.current);
+      revealIdleTimerRef.current = null;
+    }
+    if (hideHappyTimerRef.current !== null) {
+      window.clearTimeout(hideHappyTimerRef.current);
+      hideHappyTimerRef.current = null;
+    }
+  }, []);
+
+  // Pre-fetch chibi-happy.webp binary into RAM once so every click plays from Frame 0 instantaneously
+  useEffect(() => {
+    let cancelled = false;
+    async function loadHappyBlob() {
+      const candidates = [ASSETS.chibiHappy.remote, ASSETS.chibiHappy.local];
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url);
+          if (res.ok) {
+            const buf = await res.arrayBuffer();
+            if (!cancelled) {
+              happyBlobRef.current = new Blob([buf], { type: 'image/webp' });
+            }
+            return;
+          }
+        } catch {
+          // Try next fallback candidate
+        }
+      }
+    }
+    loadHappyBlob();
+    return () => {
+      cancelled = true;
+      clearChibiTimers();
+      if (activeObjectUrlRef.current) {
+        URL.revokeObjectURL(activeObjectUrlRef.current);
+        activeObjectUrlRef.current = null;
+      }
+    };
+  }, [clearChibiTimers]);
+
+  const handleChibiClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      sound.playSuccess();
+      clearChibiTimers();
+
+      // Create a fresh in-memory ObjectURL so the browser starts WebP animation at Frame 0
+      let nextSrc: string;
+      if (happyBlobRef.current) {
+        if (activeObjectUrlRef.current) {
+          URL.revokeObjectURL(activeObjectUrlRef.current);
+        }
+        nextSrc = URL.createObjectURL(happyBlobRef.current);
+        activeObjectUrlRef.current = nextSrc;
+      } else {
+        nextSrc = `${ASSETS.chibiHappy.local}?t=${Date.now()}`;
+      }
+
+      setHappyPlayKey((k) => k + 1);
+      setHappyPlaySrc(nextSrc);
+    },
+    [clearChibiTimers]
+  );
+
+  // Fired the instant Frame 0 of the fresh chibi-happy ObjectURL is decoded & painted
+  const handleHappyFrameZeroReady = useCallback(() => {
+    setIsIdleMasked(true);
+    setShowSpeechBubble(true);
+
+    if (revealIdleTimerRef.current !== null) {
+      window.clearTimeout(revealIdleTimerRef.current);
+    }
+    if (hideHappyTimerRef.current !== null) {
+      window.clearTimeout(hideHappyTimerRef.current);
+    }
+
+    // 1 full happy cycle is 30 frames * 65ms = 1950ms (Frame 0 -> raises hand & smiles -> lowers hand at Frame 29).
+    // Step 1 (at 1885ms): restore idle chibi opacity to 1 underneath BEFORE removing happy layer
+    revealIdleTimerRef.current = window.setTimeout(() => {
+      setIsIdleMasked(false);
+      revealIdleTimerRef.current = null;
+    }, 1885);
+
+    // Step 2 (at 1940ms, when happy pose ends): unmount happy layer and hide speech bubble simultaneously
+    hideHappyTimerRef.current = window.setTimeout(() => {
+      setHappyPlaySrc(null);
+      setShowSpeechBubble(false);
+      hideHappyTimerRef.current = null;
+    }, 1940);
+  }, []);
+
   // Ensure URL bar always has the /glitchtopia slug for this event
   useEffect(() => {
     try {
@@ -229,8 +341,7 @@ export default function App() {
 
   // Sync document title, <html lang>, and localStorage when language changes
   useEffect(() => {
-    const siteTitle = lang === 'VI' ? 'Trăng Soi Dặm Trường' : 'Moonstride';
-    document.title = `Glitchtopia | ${siteTitle}`;
+    document.title = lang === 'VI' ? 'Trăng Soi Dặm Trường - SK' : 'Moonstride - Events';
     document.documentElement.lang = lang === 'VI' ? 'vi' : 'en';
     try {
       window.localStorage.setItem('tsdt_lang', lang);
@@ -247,9 +358,10 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  // Preload Memory Terminal assets in background for instant switching
+  // Preload Memory Terminal and Chibi Happy assets in background for instant switching
   useEffect(() => {
     const urls = [
+      ASSETS.chibiHappy.remote,
       ASSETS.memoryWall.remote,
       ...MEMORY_CHAPTERS.flatMap((c) => [c.normalRemote, c.selectRemote]),
     ];
@@ -388,14 +500,103 @@ export default function App() {
                 className="glitchtopia-computer"
               />
 
-              {/* Center Chibi Character (Animated WebP) */}
-              <AssetImg
-                remoteSrc={ASSETS.chibiIdle.remote}
-                rawRemoteSrc={ASSETS.chibiIdle.rawRemote}
-                localSrc={ASSETS.chibiIdle.local}
-                alt="Xavier Chibi"
-                className="glitchtopia-chibi"
-              />
+              {/* Center Interactive Chibi Character (Dual-layer Idle / Happy Animated WebP for Frame-0 zero-glitch playback) */}
+              <button
+                type="button"
+                aria-label="Touch Xavier Chibi"
+                onClick={handleChibiClick}
+                className="glitchtopia-chibi-hitbox"
+              >
+                <AssetImg
+                  remoteSrc={ASSETS.chibiIdle.remote}
+                  rawRemoteSrc={ASSETS.chibiIdle.rawRemote}
+                  localSrc={ASSETS.chibiIdle.local}
+                  alt="Xavier Chibi"
+                  className={`glitchtopia-chibi-img is-idle ${!isIdleMasked ? 'is-visible' : 'is-hidden'}`}
+                />
+                {happyPlaySrc && (
+                  <img
+                    key={happyPlayKey}
+                    src={happyPlaySrc}
+                    alt="Xavier Chibi Happy"
+                    draggable={false}
+                    onLoad={handleHappyFrameZeroReady}
+                    className="glitchtopia-chibi-img is-happy is-visible"
+                  />
+                )}
+              </button>
+
+              {/* In-Game Speech Bubble matching reference screenshot */}
+              {showSpeechBubble && (
+                <div className="chibi-speech-bubble" role="status" aria-live="polite">
+                  <svg
+                    className="chibi-speech-svg"
+                    viewBox="0 0 380 106"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <defs>
+                      <linearGradient id="speechFillGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#121e2e" stopOpacity="0.95" />
+                        <stop offset="100%" stopColor="#0c1522" stopOpacity="0.97" />
+                      </linearGradient>
+                      <linearGradient id="speechOuterStroke" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#eef6ff" stopOpacity="0.95" />
+                        <stop offset="45%" stopColor="#9ab6d1" stopOpacity="0.7" />
+                        <stop offset="100%" stopColor="#e2effc" stopOpacity="0.92" />
+                      </linearGradient>
+                      <pattern
+                        id="speechScanlines"
+                        width="4"
+                        height="4"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <line
+                          x1="0"
+                          y1="0"
+                          x2="4"
+                          y2="0"
+                          stroke="#5899c4"
+                          strokeOpacity="0.1"
+                          strokeWidth="1"
+                        />
+                      </pattern>
+                    </defs>
+
+                    {/* Main Capsule + Bottom-Left Tail Outer Metallic Shape */}
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 334 90 H 54 L 30 102 L 37 87 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#speechFillGrad)"
+                      stroke="url(#speechOuterStroke)"
+                      strokeWidth="2.4"
+                      strokeLinejoin="round"
+                    />
+
+                    {/* Subtle Scanline Overlay Inside Capsule */}
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 334 90 H 54 L 30 102 L 37 87 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#speechScanlines)"
+                    />
+
+                    {/* Inner Subtle Rim Line matching Love and Deepspace bubble frame */}
+                    <path
+                      d="M 46 9.5 H 334 A 36.5 36.5 0 0 1 370.5 46 V 50 A 36.5 36.5 0 0 1 334 86.5 H 52.5 L 35.5 95.5 L 40.5 84.5 A 36.5 36.5 0 0 1 9.5 50 V 46 A 36.5 36.5 0 0 1 46 9.5 Z"
+                      fill="none"
+                      stroke="#5b7a99"
+                      strokeOpacity="0.45"
+                      strokeWidth="1.1"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  <div className="chibi-speech-text">
+                    <span>Your warm hand just</span>
+                    <span>saved the world again.</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Interactive Event HUD Overlay */}
