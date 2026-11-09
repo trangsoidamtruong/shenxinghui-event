@@ -1,0 +1,6 @@
+{
+  "name": "Trăng Soi Dặm Trường — Sự Kiện & Minigame",
+  "description": "Chuyên trang fanweb phụ tổng hợp toàn bộ sự kiện (2024–2026) và các minigame tương tác đi kèm sự kiện của Thẩm Tinh Hồi (Xavier - Love and Deepspace), thuộc hệ sinh thái Trăng Soi Dặm Trường.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
