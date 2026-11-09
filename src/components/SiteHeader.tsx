@@ -9,6 +9,8 @@ export interface SubTabItem {
 interface SiteHeaderProps {
   lang: 'VI' | 'EN';
   currentEventTitle: string;
+  currentEventSlug?: string;
+  onClickCurrentEvent?: () => void;
   onToggleLang: () => void;
   subTabs?: SubTabItem[];
   activeSubTabId?: string;
@@ -30,6 +32,8 @@ function navigateSameTab(url: string) {
 export const SiteHeader: React.FC<SiteHeaderProps> = ({
   lang,
   currentEventTitle,
+  currentEventSlug = '/glitchtopia',
+  onClickCurrentEvent,
   onToggleLang,
   subTabs,
   activeSubTabId,
@@ -83,9 +87,17 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               &gt;
             </span>
 
-            <span aria-current="page" className="site-crumb-current truncate">
+            <a
+              href={currentEventSlug}
+              aria-current="page"
+              onClick={(e) => {
+                e.preventDefault();
+                onClickCurrentEvent?.();
+              }}
+              className="site-crumb-current truncate no-underline"
+            >
               {currentEventTitle}
-            </span>
+            </a>
           </nav>
 
           <button

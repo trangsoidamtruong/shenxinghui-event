@@ -52,6 +52,11 @@ const ASSETS = {
     rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794214486/chibi-idle.webp',
     local: '/assets/aistudio/chibi-idle.webp',
   },
+  computer0: {
+    remote: `${CLOUDINARY_OPT}/v1794222624/computer-0.webp`,
+    rawRemote: `${CLOUDINARY_RAW}/v1794222624/computer-0.webp`,
+    local: '/assets/aistudio/computer-0.webp',
+  },
 };
 
 export interface ChapterAssetItem {
@@ -174,6 +179,7 @@ const AssetImg: React.FC<FallbackImgProps> = ({
 };
 
 type GlitchtopiaPage = 'hub' | 'memory-terminal';
+const GLITCHTOPIA_SLUG = '/glitchtopia';
 
 function getInitialLang(): 'VI' | 'EN' {
   if (typeof window === 'undefined') return 'VI';
@@ -202,6 +208,24 @@ export default function App() {
   const [hoveredChapter, setHoveredChapter] = useState<number | null>(null);
   const [tappedChapter, setTappedChapter] = useState<number | null>(null);
   const [chosenChapter, setChosenChapter] = useState<number | null>(null);
+
+  // Ensure URL bar always has the /glitchtopia slug for this event
+  useEffect(() => {
+    try {
+      const currentPath = window.location.pathname.replace(/\/+$/, '');
+      if (!currentPath || currentPath === '' || currentPath === '/events/glitchtopia') {
+        const targetUrl =
+          GLITCHTOPIA_SLUG + window.location.search + window.location.hash;
+        window.history.replaceState(
+          { eventSlug: 'glitchtopia', glitchtopiaPage: 'hub' },
+          '',
+          targetUrl
+        );
+      }
+    } catch {
+      // Ignore history replaceState errors in restricted environments
+    }
+  }, []);
 
   // Sync document title, <html lang>, and localStorage when language changes
   useEffect(() => {
@@ -236,7 +260,7 @@ export default function App() {
     });
   }, []);
 
-  // Sync browser Back button / mobile edge-swipe with sub-page state (keeping URL slug unchanged)
+  // Sync browser Back button / mobile edge-swipe with sub-page state (keeping /glitchtopia slug)
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const targetPage: GlitchtopiaPage =
@@ -259,9 +283,13 @@ export default function App() {
     setCurrentPage('memory-terminal');
 
     try {
-      const sameUrl =
-        window.location.pathname + window.location.search + window.location.hash;
-      window.history.pushState({ glitchtopiaPage: 'memory-terminal' }, '', sameUrl);
+      const targetUrl =
+        GLITCHTOPIA_SLUG + window.location.search + window.location.hash;
+      window.history.pushState(
+        { eventSlug: 'glitchtopia', glitchtopiaPage: 'memory-terminal' },
+        '',
+        targetUrl
+      );
     } catch {
       // Ignore history pushState errors in sandboxed environments
     }
@@ -313,6 +341,12 @@ export default function App() {
       <SiteHeader
         lang={lang}
         currentEventTitle="GLITCHTOPIA"
+        currentEventSlug={GLITCHTOPIA_SLUG}
+        onClickCurrentEvent={() => {
+          if (currentPage !== 'hub') {
+            backToHub();
+          }
+        }}
         onToggleLang={() => setLang((l) => (l === 'VI' ? 'EN' : 'VI'))}
       />
 
@@ -332,25 +366,37 @@ export default function App() {
 
         {currentPage === 'hub' ? (
           <div className={`glitchtopia-stage ${isWallReady ? 'is-ready' : 'is-loading'}`}>
-            {/* Hub Background Image */}
-            <AssetImg
-              remoteSrc={ASSETS.wall.remote}
-              rawRemoteSrc={ASSETS.wall.rawRemote}
-              localSrc={ASSETS.wall.local}
-              alt="Glitchtopia Event Background"
-              fetchPriority="high"
-              onAssetReady={() => setIsWallReady(true)}
-              className="glitchtopia-wall-img"
-            />
+            {/* 1640x2360 Room Scene Canvas (locks room furniture, computer & chibi to background coordinates) */}
+            <div className="glitchtopia-scene-canvas">
+              {/* Hub Background Image */}
+              <AssetImg
+                remoteSrc={ASSETS.wall.remote}
+                rawRemoteSrc={ASSETS.wall.rawRemote}
+                localSrc={ASSETS.wall.local}
+                alt="Glitchtopia Event Background"
+                fetchPriority="high"
+                onAssetReady={() => setIsWallReady(true)}
+                className="glitchtopia-scene-wall"
+              />
 
-            {/* Center Chibi Character (Animated WebP) */}
-            <AssetImg
-              remoteSrc={ASSETS.chibiIdle.remote}
-              rawRemoteSrc={ASSETS.chibiIdle.rawRemote}
-              localSrc={ASSETS.chibiIdle.local}
-              alt="Xavier Chibi"
-              className="glitchtopia-chibi"
-            />
+              {/* Right Shelf Hologram Computer Monitor */}
+              <AssetImg
+                remoteSrc={ASSETS.computer0.remote}
+                rawRemoteSrc={ASSETS.computer0.rawRemote}
+                localSrc={ASSETS.computer0.local}
+                alt="Hologram Computer Terminal"
+                className="glitchtopia-computer"
+              />
+
+              {/* Center Chibi Character (Animated WebP) */}
+              <AssetImg
+                remoteSrc={ASSETS.chibiIdle.remote}
+                rawRemoteSrc={ASSETS.chibiIdle.rawRemote}
+                localSrc={ASSETS.chibiIdle.local}
+                alt="Xavier Chibi"
+                className="glitchtopia-chibi"
+              />
+            </div>
 
             {/* Interactive Event HUD Overlay */}
             <div className="glitchtopia-hud-layer">
