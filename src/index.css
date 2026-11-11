@@ -435,12 +435,31 @@ a {
   aspect-ratio: 1640 / 2360;
 }
 
+/* Restore Clinic Scene Canvas: dead-center the capsule chamber on Phone & Tablet */
+.glitchtopia-scene-canvas.is-restore-clinic-canvas {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 100%;
+  aspect-ratio: 1640 / 2360;
+  min-width: 100%;
+}
+
 .glitchtopia-scene-wall {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: fill;
   pointer-events: none;
+}
+
+.glitchtopia-scene-wall.is-restore-clinic-wall {
+  filter: brightness(0.75) contrast(1.04) saturate(0.96);
+  transition: filter 280ms ease;
+}
+
+.glitchtopia-scene-wall.is-restore-clinic-wall.is-focus-dimmed {
+  filter: brightness(0.68) contrast(1.05) saturate(0.94);
 }
 
 .glitchtopia-wall-img {
@@ -452,9 +471,120 @@ a {
   object-position: 54% center;
 }
 
+/* Restore Clinic Chibi Character (689x1095 / 691x1102 animated WebP on 1640x2360 RestoreClinic-wall) */
+.restore-clinic-chibi-img {
+  position: absolute;
+  top: 36.53%;
+  left: 52.15%;
+  height: 47.37%;
+  width: auto;
+  max-width: none;
+  transform: translateX(-50%);
+  z-index: 14;
+  pointer-events: none;
+  user-select: none;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.restore-clinic-chibi-img.is-visible {
+  opacity: 1;
+  z-index: 15;
+  transition: opacity 0ms linear 0ms;
+}
+
+.restore-clinic-chibi-img.is-hidden {
+  opacity: 0.004;
+  z-index: 14;
+  transition: opacity 0ms linear 35ms;
+}
+
+/* Zoomed-in close-up position & scale for chibi1-eye after clicking Start (matches reference image) */
+.restore-clinic-chibi-img.is-zoomed-eye {
+  top: 30.4%;
+  left: 52.3%;
+  height: 61.4%;
+}
+
+/* Restore Clinic Scanning Beam (1048x412 WebP sweeping from top of chibi's head down to hand and stopping) */
+.restore-clinic-scanning-beam {
+  position: absolute;
+  top: 34.2%;
+  left: 50.8%;
+  width: 65.5%;
+  height: auto;
+  max-width: none;
+  transform: translateX(-50%);
+  z-index: 18;
+  pointer-events: none;
+  user-select: none;
+  will-change: top, opacity;
+  animation: restore-clinic-scan-sweep 2.1s cubic-bezier(0.35, 0, 0.25, 1) forwards;
+}
+
+@keyframes restore-clinic-scan-sweep {
+  0% {
+    top: 34.2%;
+    opacity: 0;
+  }
+  8% {
+    top: 34.2%;
+    opacity: 1;
+  }
+  100% {
+    top: 57.2%;
+    opacity: 1;
+  }
+}
+
+/* Restore Clinic Bottom-Right Scan Button (570x525 animated WebP) */
+/* Default / Phone view (Hình 2): smaller & shifted slightly left so it fits cleanly inside the phone screen */
+.restore-clinic-scan-btn {
+  position: absolute;
+  right: 5.8%;
+  bottom: 7.6%;
+  width: clamp(92px, 26.5%, 126px);
+  aspect-ratio: 570 / 525;
+  z-index: 26;
+  pointer-events: auto;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 160ms cubic-bezier(0.2, 0.85, 0.25, 1), filter 160ms ease;
+}
+
+.restore-clinic-scan-btn:hover {
+  transform: scale(1.03);
+  filter: brightness(1.08);
+}
+
+.restore-clinic-scan-btn:active {
+  transform: scale(0.95);
+}
+
+.restore-clinic-scan-btn:focus-visible {
+  outline: none;
+}
+
+.restore-clinic-scan-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* Tablet portrait (container width >= 640px): fits full vertical tablet frame */
 @container portrait-shell (min-width: 640px) {
-  .glitchtopia-scene-canvas {
+  .glitchtopia-scene-canvas,
+  .glitchtopia-scene-canvas.is-restore-clinic-canvas {
     left: 50%;
     transform: translateX(-50%);
     min-width: 100%;
@@ -469,6 +599,13 @@ a {
     height: auto;
     min-width: 100%;
     min-height: 100%;
+  }
+
+  /* Tablet view Scan button position matching Hình 1 (1640x2360 reference) */
+  .restore-clinic-scan-btn {
+    right: 4.15%;
+    bottom: 7.65%;
+    width: 22.94%;
   }
 
   .glitchtopia-wall-img {
@@ -490,7 +627,8 @@ a {
   }
 
   .glitchtopia-scene-canvas,
-  .glitchtopia-scene-canvas.is-care-log-canvas {
+  .glitchtopia-scene-canvas.is-care-log-canvas,
+  .glitchtopia-scene-canvas.is-restore-clinic-canvas {
     top: 0;
     left: 0;
     transform: none;
@@ -498,6 +636,12 @@ a {
     height: 100%;
     min-width: 0;
     min-height: 0;
+  }
+
+  .restore-clinic-scan-btn {
+    right: 4.15%;
+    bottom: 7.65%;
+    width: 22.94%;
   }
 
   .glitchtopia-wall-img {
@@ -753,6 +897,20 @@ a {
   width: clamp(168px, 26.8%, 242px);
 }
 
+.chibi-speech-bubble.is-clinic-quote {
+  top: 33.1%;
+  left: 49.5%;
+  width: clamp(160px, 25.5%, 232px);
+}
+
+/* Lower-right red/burgundy caretaker speech bubble in Restore Clinic (matches reference screenshot) */
+.chibi-speech-bubble.is-caretaker-red-quote {
+  top: 68.8%;
+  left: 53.6%;
+  width: clamp(148px, 25.2%, 226px);
+  transform-origin: 90% 95%;
+}
+
 .chibi-speech-svg {
   position: absolute;
   inset: 0;
@@ -779,6 +937,288 @@ a {
   color: #e9f1fa;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.65);
   white-space: nowrap;
+}
+
+.chibi-speech-text.is-caretaker-red-text {
+  color: #f9eef2;
+}
+
+/* ==========================================================================
+   Restore Clinic: Top-Center Blue Holographic "Diagnostic Checklist" Panel
+   ========================================================================== */
+.diagnostic-checklist-panel {
+  position: absolute;
+  top: 6.2%;
+  left: 50%;
+  width: 47.5%;
+  height: 27.6%;
+  transform: translateX(-50%);
+  z-index: 26;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 8px 22px rgba(4, 15, 45, 0.55))
+    drop-shadow(0 0 14px rgba(76, 212, 255, 0.25));
+  animation: diagnostic-panel-pop 240ms cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+}
+
+@keyframes diagnostic-panel-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.92) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+}
+
+.diagnostic-checklist-bg-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ==========================================================================
+   Restore Clinic: Bottom Dark-Blue & Cyan Sci-Fi Shroud Overlay (during & after scan)
+   ========================================================================== */
+.restore-clinic-bottom-shroud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 23.2%;
+  z-index: 5;
+  pointer-events: none;
+  user-select: none;
+  background-image:
+    radial-gradient(
+      ellipse 72% 30% at 50% 102%,
+      rgba(68, 232, 255, 0.56) 0%,
+      rgba(26, 148, 198, 0.28) 52%,
+      transparent 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(6, 14, 28, 0) 0%,
+      rgba(7, 16, 33, 0.58) 14%,
+      rgba(7, 17, 36, 0.90) 28%,
+      rgba(8, 20, 42, 0.96) 58%,
+      rgba(9, 25, 50, 0.98) 88%,
+      rgba(18, 62, 98, 0.99) 100%
+    );
+  animation: clinic-shroud-fade-in 260ms ease-out forwards;
+}
+
+.restore-clinic-bottom-shroud::before {
+  content: "";
+  position: absolute;
+  left: 3.4%;
+  right: 3.4%;
+  top: 22%;
+  bottom: 0;
+  background-image:
+    linear-gradient(to right, rgba(46, 128, 198, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(46, 128, 198, 0.15) 1px, transparent 1px);
+  background-size: 9.09% 25%;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 28%, #000 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.85) 28%, #000 100%);
+  pointer-events: none;
+}
+
+.restore-clinic-bottom-shroud-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@keyframes clinic-shroud-fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ==========================================================================
+   Restore Clinic: Bottom-Center Holographic "Start" Button on Square Grid
+   ========================================================================== */
+.restore-clinic-start-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 7.4%;
+  width: 34.5%;
+  max-width: 160px;
+  aspect-ratio: 356 / 118;
+  transform: translateX(-50%);
+  z-index: 30;
+  pointer-events: auto;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 12px rgba(4, 14, 34, 0.75))
+    drop-shadow(0 0 10px rgba(72, 226, 255, 0.28));
+  transition: transform 160ms cubic-bezier(0.2, 0.85, 0.25, 1), filter 160ms ease;
+  animation: cyber-start-btn-pop 220ms cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+}
+
+.restore-clinic-start-btn:hover,
+.restore-clinic-start-btn:focus-visible {
+  transform: translateX(-50%) translateY(-2px) scale(1.03);
+  filter: drop-shadow(0 6px 16px rgba(4, 14, 34, 0.85))
+    drop-shadow(0 0 16px rgba(102, 238, 255, 0.65))
+    brightness(1.08);
+  outline: none;
+}
+
+.restore-clinic-start-btn:active {
+  transform: translateX(-50%) translateY(0) scale(0.96);
+}
+
+.restore-clinic-start-label {
+  position: relative;
+  z-index: 2;
+  padding-inline: 8%;
+  text-align: center;
+  font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+  font-size: clamp(11px, 1.52vh, 13.8px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: #f4fcff;
+  text-shadow: 0 1px 2px rgba(6, 20, 48, 0.85), 0 0 8px rgba(114, 242, 255, 0.45);
+  pointer-events: none;
+}
+
+@keyframes cyber-start-btn-pop {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* ==========================================================================
+   Restore Clinic Step 4: Bottom Grid Narrative Text & 2 Choice Buttons
+   ========================================================================== */
+.restore-clinic-choice-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 23.2%;
+  z-index: 30;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 8.5%;
+  padding: 4.5% 13.2% 0 13.2%;
+  animation: clinic-choice-fade-in 220ms cubic-bezier(0.2, 0.85, 0.25, 1) forwards;
+}
+
+@keyframes clinic-choice-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.restore-clinic-choice-prompt {
+  margin: 0;
+  font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+  font-size: clamp(10.2px, 1.48vh, 13.2px);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.015em;
+  color: #edf5fc;
+  text-shadow: 0 1px 3px rgba(3, 10, 26, 0.9);
+  user-select: none;
+}
+
+.restore-clinic-choice-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12%;
+  width: 100%;
+  padding-inline: 2%;
+}
+
+.restore-clinic-choice-btn {
+  position: relative;
+  width: 34.5%;
+  max-width: 160px;
+  aspect-ratio: 356 / 118;
+  pointer-events: auto;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 12px rgba(4, 14, 34, 0.75))
+    drop-shadow(0 0 10px rgba(72, 226, 255, 0.28));
+  transition: transform 160ms cubic-bezier(0.2, 0.85, 0.25, 1), filter 160ms ease;
+}
+
+.restore-clinic-choice-btn:hover,
+.restore-clinic-choice-btn:focus-visible {
+  transform: translateY(-2px) scale(1.03);
+  filter: drop-shadow(0 6px 16px rgba(4, 14, 34, 0.85))
+    drop-shadow(0 0 16px rgba(102, 238, 255, 0.65))
+    brightness(1.08);
+  outline: none;
+}
+
+.restore-clinic-choice-btn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.restore-clinic-choice-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
+.restore-clinic-choice-label {
+  position: relative;
+  z-index: 2;
+  padding-inline: 7%;
+  text-align: center;
+  font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+  font-size: clamp(9.4px, 1.34vh, 12px);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  color: #f4fcff;
+  text-shadow: 0 1px 2px rgba(6, 20, 48, 0.85), 0 0 8px rgba(114, 242, 255, 0.45);
+  pointer-events: none;
 }
 
 @keyframes chibi-speech-pop {

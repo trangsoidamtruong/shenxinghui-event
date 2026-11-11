@@ -51,6 +51,40 @@ const ASSETS = {
     rawRemote: `${CLOUDINARY_RAW}/v1794358870/carelog-wall.webp`,
     local: '/assets/aistudio/carelog-wall.webp',
   },
+  restoreClinicWall: {
+    remote: `${CLOUDINARY_OPT}/v1794205543/RestoreClinic-wall.webp`,
+    rawRemote: `${CLOUDINARY_RAW}/v1794205543/RestoreClinic-wall.webp`,
+    local: '/assets/aistudio/RestoreClinic-wall.webp',
+  },
+  scanButton: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359973/scan-button.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359973/scan-button.webp',
+    local: '/assets/aistudio/scan-button.webp',
+  },
+  chibiCare: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794364780/chibi-care.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794364780/chibi-care.webp',
+    local: '/assets/aistudio/chibi-care.webp',
+  },
+  chibiEyeBattery: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794386034/chibi1-eyebattery.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794386034/chibi1-eyebattery.webp',
+    local: '/assets/aistudio/chibi1-eyebattery.webp',
+  },
+  chibiEye: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794386034/chibi1-eye.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794386034/chibi1-eye.webp',
+    local: '/assets/aistudio/chibi1-eye.webp',
+  },
+  scanning: {
+    remote: `${CLOUDINARY_OPT}/v1794359972/scanning.webp`,
+    rawRemote: `${CLOUDINARY_RAW}/v1794359972/scanning.webp`,
+    local: '/assets/aistudio/scanning.webp',
+  },
   chibiIdle: {
     // Keep animated WebP original URL untouched so all animation frames play smoothly
     remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794214486/chibi-idle.webp',
@@ -86,6 +120,35 @@ const ASSETS = {
 };
 
 const COMPUTER_SKINS = [ASSETS.computer0, ASSETS.computer1, ASSETS.computer2];
+
+// ============================================================================
+// NỘI DUNG BẢNG DIAGNOSTIC CHECKLIST (Dễ dàng chỉnh sửa chữ tại đây)
+// ============================================================================
+const DIAGNOSTIC_CHECKLIST_TEXT = {
+  title: 'Diagnostic Checklist',
+  subtitle: 'DIAGNOSIS   REPORT',
+  items: [
+    {
+      id: 'eyelid',
+      iconType: 'face' as const,
+      lines: ['Circuitry visible below', 'the lower eyelid.'],
+    },
+    {
+      id: 'battery',
+      iconType: 'body' as const,
+      lines: ['Warning! Battery level is', 'low.'],
+    },
+  ],
+};
+
+// ============================================================================
+// NỘI DUNG BƯỚC SỬA CHỮA MẮT SAU KHI NHẤN START (Dễ dàng chỉnh sửa chữ tại đây)
+// ============================================================================
+const MAINTENANCE_EYE_STEP_TEXT = {
+  prompt:
+    "The exposed circuitry looks like face decor, though Xavier doesn't seem to notice.",
+  choices: ['Use weilding gun', 'Even it out'] as const,
+};
 
 export interface ChapterAssetItem {
   chapter: number;
@@ -206,7 +269,7 @@ const AssetImg: React.FC<FallbackImgProps> = ({
   );
 };
 
-type GlitchtopiaPage = 'hub' | 'memory-terminal' | 'care-log';
+type GlitchtopiaPage = 'hub' | 'memory-terminal' | 'care-log' | 'restore-clinic';
 const GLITCHTOPIA_SLUG = '/glitchtopia';
 
 function getInitialLang(): 'VI' | 'EN' {
@@ -246,6 +309,28 @@ export default function App() {
   // Care Log interactive log boxes (Log - 1 .. Log - 6)
   const [hoveredCareLog, setHoveredCareLog] = useState<number | null>(null);
   const [selectedCareLog, setSelectedCareLog] = useState<number | null>(null);
+
+  // Restore Clinic scanning phase:
+  // - 'idle': scan-button visible, chibi-care visible
+  // - 'scanning': scan-button hidden, scanning.webp sweeps from top of head down to hand
+  // - 'done': scanning.webp disappears, chibi-care replaced by chibi1-eyebattery at exact same spot
+  const [clinicScanPhase, setClinicScanPhase] = useState<'idle' | 'scanning' | 'done'>('idle');
+  // Dialogue step after scan completes:
+  // - 0: hidden
+  // - 1: top dark-blue bubble ("System error. I need some time for repairs.")
+  // - 2: lower-right red bubble ("Then let me switch to caretaker mode." without "Lys Stargazer")
+  // - 3: top-center blue holographic "Diagnostic Checklist" board + bottom "Start" button
+  // - 4: zoomed-in chibi1-eye + bottom grid prompt & 2 choice buttons ("Use weilding gun" / "Even it out")
+  const [clinicDialogueStep, setClinicDialogueStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+
+  useEffect(() => {
+    if (clinicScanPhase !== 'scanning') return;
+    const timer = window.setTimeout(() => {
+      setClinicScanPhase('done');
+      setClinicDialogueStep(1);
+    }, 2120);
+    return () => window.clearTimeout(timer);
+  }, [clinicScanPhase]);
 
   // Chibi happy interaction & speech bubble state
   // - happyBlobRef: cached in-memory Blob of chibi-happy.webp so each click creates a fresh
@@ -433,6 +518,12 @@ export default function App() {
         ASSETS.computer1.remote,
         ASSETS.computer2.remote,
         ASSETS.careLogWall.remote,
+        ASSETS.restoreClinicWall.remote,
+        ASSETS.scanButton.remote,
+        ASSETS.chibiCare.remote,
+        ASSETS.chibiEyeBattery.remote,
+        ASSETS.chibiEye.remote,
+        ASSETS.scanning.remote,
         ASSETS.memoryWall.remote,
         ...MEMORY_CHAPTERS.flatMap((c) => [c.normalRemote, c.selectRemote]),
       ];
@@ -450,7 +541,13 @@ export default function App() {
     const handlePopState = (event: PopStateEvent) => {
       const statePage = event.state?.glitchtopiaPage;
       const targetPage: GlitchtopiaPage =
-        statePage === 'memory-terminal' || statePage === 'care-log' ? statePage : 'hub';
+        statePage === 'memory-terminal' ||
+        statePage === 'care-log' ||
+        statePage === 'restore-clinic'
+          ? statePage
+          : 'hub';
+      setClinicScanPhase('idle');
+      setClinicDialogueStep(0);
       setHoveredChapter(null);
       setTappedChapter(null);
       setChosenChapter(null);
@@ -501,22 +598,54 @@ export default function App() {
     }
   }, []);
 
+  const openRestoreClinic = useCallback((logId?: number) => {
+    sound.playSelect();
+    if (typeof logId === 'number') {
+      setSelectedCareLog(logId);
+    }
+    setClinicScanPhase('idle');
+    setClinicDialogueStep(0);
+    setHoveredCareLog(null);
+    setHoveredChapter(null);
+    setTappedChapter(null);
+    setChosenChapter(null);
+    setCurrentPage('restore-clinic');
+
+    try {
+      const targetUrl =
+        GLITCHTOPIA_SLUG + window.location.search + window.location.hash;
+      window.history.pushState(
+        { eventSlug: 'glitchtopia', glitchtopiaPage: 'restore-clinic' },
+        '',
+        targetUrl
+      );
+    } catch {
+      // Ignore history pushState errors in sandboxed environments
+    }
+  }, []);
+
   const backToHub = useCallback(() => {
     sound.playSelect();
+    setClinicScanPhase('idle');
+    setClinicDialogueStep(0);
     setHoveredChapter(null);
     setTappedChapter(null);
     setChosenChapter(null);
 
     try {
       const statePage = window.history.state?.glitchtopiaPage;
-      if (statePage === 'memory-terminal' || statePage === 'care-log') {
+      if (
+        statePage === 'memory-terminal' ||
+        statePage === 'care-log' ||
+        statePage === 'restore-clinic'
+      ) {
         window.history.back();
         return;
       }
     } catch {
       // Fallback to direct state update
     }
-    setCurrentPage('hub');
+    setCurrentPage((prev) => (prev === 'restore-clinic' ? 'care-log' : 'hub'));
   }, []);
 
   const handleChapterClick = (chapterNum: number) => {
@@ -990,7 +1119,7 @@ export default function App() {
                 type="button"
                 aria-label="Restore Clinic"
                 onMouseEnter={() => sound.playHover()}
-                onClick={() => sound.playSelect()}
+                onClick={() => openRestoreClinic()}
                 className="glitchtopia-btn glitchtopia-btn-restore"
               >
                 <AssetImg
@@ -1312,14 +1441,12 @@ export default function App() {
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        sound.playSelect();
-                        setSelectedCareLog(box.id);
+                        openRestoreClinic(box.id);
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          sound.playSelect();
-                          setSelectedCareLog(box.id);
+                          openRestoreClinic(box.id);
                         }
                       }}
                     >
@@ -1501,6 +1628,927 @@ export default function App() {
                   />
                 </svg>
               </button>
+            </div>
+          </div>
+        )}
+
+        {currentPage === 'restore-clinic' && (
+          <div
+            className="glitchtopia-stage is-ready"
+            onClick={() => {
+              if (clinicDialogueStep === 1) {
+                sound.playSelect();
+                setClinicDialogueStep(2);
+              } else if (clinicDialogueStep === 2) {
+                sound.playSelect();
+                setClinicDialogueStep(3);
+              }
+            }}
+          >
+            {/* Coordinate-locked 1640x2360 Restore Clinic Scene Canvas */}
+            <div className="glitchtopia-scene-canvas is-restore-clinic-canvas">
+              <AssetImg
+                remoteSrc={ASSETS.restoreClinicWall.remote}
+                rawRemoteSrc={ASSETS.restoreClinicWall.rawRemote}
+                localSrc={ASSETS.restoreClinicWall.local}
+                alt="Restore Clinic Background"
+                className={`glitchtopia-scene-wall is-restore-clinic-wall ${
+                  clinicDialogueStep === 4 ? 'is-focus-dimmed' : ''
+                }`}
+              />
+
+              {/* Restore Clinic Chibi Character: multi-layer (chibi-care -> chibi1-eyebattery -> zoomed chibi1-eye on Start) */}
+              <AssetImg
+                remoteSrc={ASSETS.chibiCare.remote}
+                rawRemoteSrc={ASSETS.chibiCare.rawRemote}
+                localSrc={ASSETS.chibiCare.local}
+                alt="Xavier Chibi Restore Clinic"
+                className={`restore-clinic-chibi-img ${
+                  clinicScanPhase === 'done' ? 'is-hidden' : 'is-visible'
+                }`}
+              />
+              <AssetImg
+                remoteSrc={ASSETS.chibiEyeBattery.remote}
+                rawRemoteSrc={ASSETS.chibiEyeBattery.rawRemote}
+                localSrc={ASSETS.chibiEyeBattery.local}
+                alt="Xavier Chibi Eye Battery"
+                className={`restore-clinic-chibi-img ${
+                  clinicScanPhase === 'done' && clinicDialogueStep < 4
+                    ? 'is-visible'
+                    : 'is-hidden'
+                }`}
+              />
+              <AssetImg
+                remoteSrc={ASSETS.chibiEye.remote}
+                rawRemoteSrc={ASSETS.chibiEye.rawRemote}
+                localSrc={ASSETS.chibiEye.local}
+                alt="Xavier Chibi Eye Close-up"
+                className={`restore-clinic-chibi-img is-zoomed-eye ${
+                  clinicScanPhase === 'done' && clinicDialogueStep === 4
+                    ? 'is-visible'
+                    : 'is-hidden'
+                }`}
+              />
+
+              {/* Scanning Laser Beam Overlay (sweeps from top of head down to hand, then disappears and swaps chibi) */}
+              {clinicScanPhase === 'scanning' && (
+                <AssetImg
+                  remoteSrc={ASSETS.scanning.remote}
+                  rawRemoteSrc={ASSETS.scanning.rawRemote}
+                  localSrc={ASSETS.scanning.local}
+                  alt="Scanning..."
+                  onAnimationEnd={() => {
+                    setClinicScanPhase('done');
+                    setClinicDialogueStep(1);
+                  }}
+                  className="restore-clinic-scanning-beam"
+                />
+              )}
+
+              {/* Step 1: Persistent Top Speech Bubble after switching to chibi1-eyebattery */}
+              {clinicDialogueStep === 1 && (
+                <div
+                  className="chibi-speech-bubble is-clinic-quote"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <svg
+                    className="chibi-speech-svg"
+                    viewBox="0 0 380 106"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <defs>
+                      <linearGradient id="clinicSpeechFillGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#121e2e" stopOpacity="0.95" />
+                        <stop offset="100%" stopColor="#0c1522" stopOpacity="0.97" />
+                      </linearGradient>
+                      <linearGradient id="clinicSpeechOuterStroke" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#eef6ff" stopOpacity="0.95" />
+                        <stop offset="45%" stopColor="#9ab6d1" stopOpacity="0.7" />
+                        <stop offset="100%" stopColor="#e2effc" stopOpacity="0.92" />
+                      </linearGradient>
+                      <pattern
+                        id="clinicSpeechScanlines"
+                        width="4"
+                        height="4"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <line
+                          x1="0"
+                          y1="0"
+                          x2="4"
+                          y2="0"
+                          stroke="#5899c4"
+                          strokeOpacity="0.1"
+                          strokeWidth="1"
+                        />
+                      </pattern>
+                    </defs>
+
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 334 90 H 54 L 30 102 L 37 87 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#clinicSpeechFillGrad)"
+                      stroke="url(#clinicSpeechOuterStroke)"
+                      strokeWidth="2.4"
+                      strokeLinejoin="round"
+                    />
+
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 334 90 H 54 L 30 102 L 37 87 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#clinicSpeechScanlines)"
+                    />
+
+                    <path
+                      d="M 46 9.5 H 334 A 36.5 36.5 0 0 1 370.5 46 V 50 A 36.5 36.5 0 0 1 334 86.5 H 52.5 L 35.5 95.5 L 40.5 84.5 A 36.5 36.5 0 0 1 9.5 50 V 46 A 36.5 36.5 0 0 1 46 9.5 Z"
+                      fill="none"
+                      stroke="#5b7a99"
+                      strokeOpacity="0.45"
+                      strokeWidth="1.1"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+
+                  <div className="chibi-speech-text">
+                    <span>System error. I need</span>
+                    <span>some time for repairs.</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Lower-Right Red/Burgundy Caretaker Speech Bubble (without "Lys Stargazer") */}
+              {clinicDialogueStep === 2 && (
+                <div
+                  className="chibi-speech-bubble is-caretaker-red-quote"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <svg
+                    className="chibi-speech-svg"
+                    viewBox="0 0 380 106"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <defs>
+                      <linearGradient id="caretakerRedFillGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#581b30" stopOpacity="0.94" />
+                        <stop offset="100%" stopColor="#72233d" stopOpacity="0.96" />
+                      </linearGradient>
+                      <linearGradient id="caretakerRedOuterStroke" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#f5dfe6" stopOpacity="0.95" />
+                        <stop offset="50%" stopColor="#d39eb0" stopOpacity="0.8" />
+                        <stop offset="100%" stopColor="#f5dfe6" stopOpacity="0.95" />
+                      </linearGradient>
+                      <pattern
+                        id="caretakerRedScanlines"
+                        width="4"
+                        height="4"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <line
+                          x1="0"
+                          y1="0"
+                          x2="4"
+                          y2="0"
+                          stroke="#c86482"
+                          strokeOpacity="0.12"
+                          strokeWidth="1"
+                        />
+                      </pattern>
+                    </defs>
+
+                    {/* Main Capsule + Bottom-Right Tail Outer Metallic Shape */}
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 343 87 L 352 101 L 326 90 H 46 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#caretakerRedFillGrad)"
+                      stroke="url(#caretakerRedOuterStroke)"
+                      strokeWidth="2.4"
+                      strokeLinejoin="round"
+                    />
+
+                    {/* Subtle Scanline Overlay Inside Capsule */}
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 343 87 L 352 101 L 326 90 H 46 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#caretakerRedScanlines)"
+                    />
+
+                    {/* Inner Subtle Rim Line */}
+                    <path
+                      d="M 46 9.5 H 334 A 36.5 36.5 0 0 1 370.5 46 V 50 A 36.5 36.5 0 0 1 339.5 84.5 L 344.5 94.5 L 327.5 86.5 H 46 A 36.5 36.5 0 0 1 9.5 50 V 46 A 36.5 36.5 0 0 1 46 9.5 Z"
+                      fill="none"
+                      stroke="#b36880"
+                      strokeOpacity="0.52"
+                      strokeWidth="1.1"
+                      strokeLinejoin="round"
+                    />
+
+                    {/* Small downward indicator triangle at bottom-right matching reference screenshot */}
+                    <polygon
+                      points="333,73 343,73 338,80"
+                      fill="#f6e7ec"
+                      fillOpacity="0.95"
+                    />
+                  </svg>
+
+                  <div className="chibi-speech-text is-caretaker-red-text">
+                    <span>Then let me switch to</span>
+                    <span>caretaker mode.</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Top-Center Blue Holographic Diagnostic Checklist Panel (Hình 1 & Hình 2) */}
+              {clinicDialogueStep === 3 && (
+                <div
+                  className="diagnostic-checklist-panel"
+                  role="region"
+                  aria-label={DIAGNOSTIC_CHECKLIST_TEXT.title}
+                >
+                  <svg
+                    className="diagnostic-checklist-bg-svg"
+                    viewBox="0 0 520 436"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="xMidYMid meet"
+                  >
+                    <defs>
+                      <linearGradient id="diagPanelGrad" x1="0" y1="0" x2="0.15" y2="1">
+                        <stop offset="0%" stopColor="#3558a8" stopOpacity="0.86" />
+                        <stop offset="22%" stopColor="#1b439c" stopOpacity="0.90" />
+                        <stop offset="72%" stopColor="#133b94" stopOpacity="0.93" />
+                        <stop offset="92%" stopColor="#1c68b8" stopOpacity="0.94" />
+                        <stop offset="100%" stopColor="#3bbce8" stopOpacity="0.95" />
+                      </linearGradient>
+                      <radialGradient id="diagTopLeftFrost" cx="0.08" cy="0.06" r="0.55">
+                        <stop offset="0%" stopColor="#b8dcff" stopOpacity="0.42" />
+                        <stop offset="50%" stopColor="#6ea4e8" stopOpacity="0.14" />
+                        <stop offset="100%" stopColor="#1b439c" stopOpacity="0" />
+                      </radialGradient>
+                      <pattern
+                        id="diagDotGrid"
+                        width="8"
+                        height="8"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <circle cx="2" cy="2" r="0.85" fill="#7ce8ff" fillOpacity="0.12" />
+                      </pattern>
+                      <filter
+                        id="diagTextGlow"
+                        x="-15%"
+                        y="-15%"
+                        width="130%"
+                        height="130%"
+                        colorInterpolationFilters="sRGB"
+                      >
+                        <feDropShadow
+                          dx="0"
+                          dy="1.5"
+                          stdDeviation="2.5"
+                          floodColor="#07194a"
+                          floodOpacity="0.7"
+                        />
+                      </filter>
+                    </defs>
+
+                    {/* Main Holographic Blue Screen Fill */}
+                    <rect
+                      x="14"
+                      y="10"
+                      width="486"
+                      height="412"
+                      rx="3"
+                      fill="url(#diagPanelGrad)"
+                    />
+                    <rect
+                      x="14"
+                      y="10"
+                      width="486"
+                      height="412"
+                      rx="3"
+                      fill="url(#diagTopLeftFrost)"
+                    />
+                    <rect
+                      x="14"
+                      y="10"
+                      width="486"
+                      height="412"
+                      rx="3"
+                      fill="url(#diagDotGrid)"
+                    />
+
+                    {/* Subtle DNA / Wave Dotted Curve in Bottom-Right Corner matching Hình 1 */}
+                    <path
+                      d="M 366 420 C 370 368, 412 344, 456 322 C 478 310, 492 286, 498 256"
+                      stroke="#7ce8ff"
+                      strokeOpacity="0.22"
+                      strokeWidth="2.2"
+                      strokeDasharray="3 6"
+                      fill="none"
+                    />
+                    <path
+                      d="M 412 420 C 424 382, 448 352, 474 316 C 488 296, 494 274, 498 242"
+                      stroke="#7ce8ff"
+                      strokeOpacity="0.18"
+                      strokeWidth="2"
+                      strokeDasharray="2.5 5.5"
+                      fill="none"
+                    />
+
+                    {/* Outer Thin Cyan Border + Top-Center Trapezoid Notch */}
+                    <path
+                      d="M 14 10 H 204 L 210 18 H 304 L 310 10 H 500 V 422 H 14 Z"
+                      stroke="#7ce8ff"
+                      strokeOpacity="0.58"
+                      strokeWidth="1.5"
+                      fill="none"
+                    />
+                    <line
+                      x1="204"
+                      y1="10"
+                      x2="310"
+                      y2="10"
+                      stroke="#7ce8ff"
+                      strokeOpacity="0.35"
+                      strokeWidth="1"
+                    />
+
+                    {/* 4 Glowing Cyan L-Shaped Corner Brackets */}
+                    <path
+                      d="M 12 32 V 9 H 36"
+                      stroke="#9cf8ff"
+                      strokeWidth="3.8"
+                      strokeLinecap="square"
+                    />
+                    <path
+                      d="M 478 9 H 502 V 32"
+                      stroke="#9cf8ff"
+                      strokeWidth="3.8"
+                      strokeLinecap="square"
+                    />
+                    <path
+                      d="M 12 400 V 423 H 36"
+                      stroke="#9cf8ff"
+                      strokeWidth="3.8"
+                      strokeLinecap="square"
+                    />
+                    <path
+                      d="M 478 423 H 502 V 400"
+                      stroke="#9cf8ff"
+                      strokeWidth="3.8"
+                      strokeLinecap="square"
+                    />
+
+                    {/* Top-Right & Bottom-Left Cyber Pixel Clusters (::::) */}
+                    {[422, 430, 438, 446].map((cx) => (
+                      <g key={`tr-${cx}`} fill="#b8f6ff" fillOpacity="0.85">
+                        <rect x={cx} y="20" width="3" height="3" />
+                        <rect x={cx - 6} y="27" width="3" height="3" />
+                      </g>
+                    ))}
+                    {[30, 38, 46, 54].map((cx) => (
+                      <g key={`bl-${cx}`} fill="#b8f6ff" fillOpacity="0.85">
+                        <rect x={cx} y="410" width="3" height="3" />
+                        <rect x={cx + 4} y="417" width="3" height="3" />
+                      </g>
+                    ))}
+
+                    {/* Header: + Diagnostic Checklist + */}
+                    {/* Left Plus (+) Icon */}
+                    <g fill="#73cde8" fillOpacity="0.92">
+                      <rect x="92" y="54" width="18" height="6" rx="1" />
+                      <rect x="98" y="48" width="6" height="18" rx="1" />
+                    </g>
+                    {/* Right Plus (+) Icon */}
+                    <g fill="#73cde8" fillOpacity="0.92">
+                      <rect x="404" y="54" width="18" height="6" rx="1" />
+                      <rect x="410" y="48" width="6" height="18" rx="1" />
+                    </g>
+                    {/* Main Title */}
+                    <text
+                      x="257"
+                      y="66"
+                      textAnchor="middle"
+                      fill="#f8fdff"
+                      fontFamily="'Be Vietnam Pro', 'Segoe UI', sans-serif"
+                      fontWeight="700"
+                      fontSize="27.5"
+                      letterSpacing="0.2"
+                      filter="url(#diagTextGlow)"
+                    >
+                      {DIAGNOSTIC_CHECKLIST_TEXT.title}
+                    </text>
+                    {/* Subtitle: DIAGNOSIS REPORT */}
+                    <text
+                      x="257"
+                      y="91"
+                      textAnchor="middle"
+                      fill="#a2c9ec"
+                      fontFamily="'Chakra Petch', 'Segoe UI', sans-serif"
+                      fontWeight="600"
+                      fontSize="12.5"
+                      letterSpacing="2.2"
+                    >
+                      {DIAGNOSTIC_CHECKLIST_TEXT.subtitle}
+                    </text>
+
+                    {/* 3 Horizontal Divider Lines with Left Accent Bar + Node Dot (•) */}
+                    {[118, 250, 382].map((yPos) => (
+                      <g key={`div-${yPos}`}>
+                        <line
+                          x1="56"
+                          y1={yPos}
+                          x2="442"
+                          y2={yPos}
+                          stroke="#9ed8ff"
+                          strokeOpacity="0.52"
+                          strokeWidth="1.3"
+                        />
+                        <line
+                          x1="56"
+                          y1={yPos}
+                          x2="82"
+                          y2={yPos}
+                          stroke="#bae6ff"
+                          strokeOpacity="0.82"
+                          strokeWidth="2.8"
+                        />
+                        <circle
+                          cx="82"
+                          cy={yPos}
+                          r="2.8"
+                          fill="#d6f2ff"
+                          fillOpacity="0.92"
+                        />
+                      </g>
+                    ))}
+
+                    {/* Checklist Items (Row 1 & Row 2) */}
+                    {DIAGNOSTIC_CHECKLIST_TEXT.items.map((item, rowIdx) => {
+                      const rowTop = rowIdx === 0 ? 118 : 250;
+                      const iconX = 56;
+                      const iconY = rowTop + 28;
+                      const textX = 148;
+                      const firstLineY =
+                        item.lines.length > 1 ? rowTop + 60 : rowTop + 75;
+                      const lineGap = 31;
+
+                      return (
+                        <g key={item.id}>
+                          {/* Left Target Bracket Icon (74x74) */}
+                          <g transform={`translate(${iconX}, ${iconY})`}>
+                            <path
+                              d="M 4 24 V 4 H 24 M 50 4 H 70 V 24 M 70 50 V 70 H 50 M 24 70 H 4 V 50"
+                              stroke="#7ae8ff"
+                              strokeWidth="3.2"
+                              strokeLinecap="square"
+                            />
+                            {item.iconType === 'face' ? (
+                              <g>
+                                <circle cx="37" cy="34.5" r="19" fill="#ffffff" />
+                                <path
+                                  d="M 18.5 61 C 22 53.5, 52 53.5, 55.5 61 Z"
+                                  fill="#ffffff"
+                                />
+                                <ellipse cx="30.2" cy="37.5" rx="2.2" ry="3.1" fill="#183f96" />
+                                <ellipse cx="43.8" cy="37.5" rx="2.2" ry="3.1" fill="#183f96" />
+                                <path
+                                  d="M 34.4 43.2 Q 37 45.4 39.6 43.2"
+                                  stroke="#183f96"
+                                  strokeWidth="2.1"
+                                  strokeLinecap="round"
+                                  fill="none"
+                                />
+                              </g>
+                            ) : (
+                              <g>
+                                <path
+                                  d="M 31.8 16.5 C 31.8 14.8, 42.2 14.8, 42.2 16.5 L 43.4 22.5 L 54.4 27.6 C 57.2 29, 58.4 31.6, 58.4 35.2 V 57.2 C 58.4 59, 56.9 60, 55 60 H 50 V 38.6 H 47 V 60 H 27 V 38.6 H 24 V 60 H 19 C 17.1 60, 15.6 59, 15.6 57.2 V 35.2 C 15.6 31.6, 16.8 29, 19.6 27.6 L 30.6 22.5 Z"
+                                  fill="#ffffff"
+                                />
+                              </g>
+                            )}
+                          </g>
+
+                          {/* Editable Multi-Line Text */}
+                          {item.lines.map((line, lineIdx) => (
+                            <text
+                              key={lineIdx}
+                              x={textX}
+                              y={firstLineY + lineIdx * lineGap}
+                              fill="#f4f9ff"
+                              fontFamily="'Be Vietnam Pro', 'Segoe UI', sans-serif"
+                              fontWeight="500"
+                              fontSize="23.5"
+                              letterSpacing="0.15"
+                              filter="url(#diagTextGlow)"
+                            >
+                              {line}
+                            </text>
+                          ))}
+                        </g>
+                      );
+                    })}
+                  </svg>
+                </div>
+              )}
+            </div>
+
+            {/* Interactive HUD Layer with Top-Left Back Button, Bottom Shroud & Scan Button */}
+            <div className="glitchtopia-hud-layer">
+              {/* Bottom Dark-Blue & Cyan Sci-Fi Shroud Overlay (appears as soon as scanning starts) */}
+              {clinicScanPhase !== 'idle' && (
+                <div className="restore-clinic-bottom-shroud" aria-hidden="true">
+                  <svg
+                    className="restore-clinic-bottom-shroud-svg"
+                    viewBox="0 0 1000 320"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                  >
+                    <defs>
+                      <linearGradient id="shroudSideLineGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#9ce6ff" stopOpacity="0.18" />
+                        <stop offset="28%" stopColor="#b8f0ff" stopOpacity="0.62" />
+                        <stop offset="85%" stopColor="#72d8ff" stopOpacity="0.48" />
+                        <stop offset="100%" stopColor="#58d0ff" stopOpacity="0.2" />
+                      </linearGradient>
+                      <pattern
+                        id="shroudEdgeScanlines"
+                        width="8"
+                        height="5"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <line
+                          x1="0"
+                          y1="0"
+                          x2="8"
+                          y2="0"
+                          stroke="#86dcff"
+                          strokeOpacity="0.2"
+                          strokeWidth="1.2"
+                        />
+                      </pattern>
+                    </defs>
+
+                    {/* Left & Right Outer Margin Scanline Strips */}
+                    <rect
+                      x="0"
+                      y="108"
+                      width="34"
+                      height="212"
+                      fill="url(#shroudEdgeScanlines)"
+                    />
+                    <rect
+                      x="966"
+                      y="108"
+                      width="34"
+                      height="212"
+                      fill="url(#shroudEdgeScanlines)"
+                    />
+
+                    {/* Left & Right Vertical HUD Guide Lines */}
+                    <line
+                      x1="34"
+                      y1="18"
+                      x2="34"
+                      y2="320"
+                      stroke="url(#shroudSideLineGrad)"
+                      strokeWidth="1.6"
+                    />
+                    <line
+                      x1="966"
+                      y1="18"
+                      x2="966"
+                      y2="320"
+                      stroke="url(#shroudSideLineGrad)"
+                      strokeWidth="1.6"
+                    />
+
+                    {/* Small Square Nodes along Left & Right Vertical Guide Lines */}
+                    {[20, 114, 198, 266].map((ny) => (
+                      <g key={`node-${ny}`} fill="#dcf8ff" fillOpacity="0.88">
+                        <rect x="31.5" y={ny} width="5" height="5" />
+                        <rect x="963.5" y={ny} width="5" height="5" />
+                      </g>
+                    ))}
+
+                    {/* Glowing Cyan-Teal Tick Marks (Upper 3 ticks ''' and Lower 2 ticks '') */}
+                    {/* Upper-Left 3 ticks */}
+                    <g fill="#5bf2ff" fillOpacity="0.92">
+                      <rect x="76" y="34" width="3" height="10" rx="1" />
+                      <rect x="84" y="34" width="3" height="10" rx="1" />
+                      <rect x="92" y="34" width="3" height="10" rx="1" />
+                    </g>
+                    {/* Lower-Left 2 ticks */}
+                    <g fill="#5bf2ff" fillOpacity="0.88">
+                      <rect x="76" y="110" width="3" height="9" rx="1" />
+                      <rect x="84" y="110" width="3" height="9" rx="1" />
+                    </g>
+
+                    {/* Upper-Right 3 ticks */}
+                    <g fill="#5bf2ff" fillOpacity="0.92">
+                      <rect x="905" y="34" width="3" height="10" rx="1" />
+                      <rect x="913" y="34" width="3" height="10" rx="1" />
+                      <rect x="921" y="34" width="3" height="10" rx="1" />
+                    </g>
+                    {/* Lower-Right 2 ticks */}
+                    <g fill="#5bf2ff" fillOpacity="0.88">
+                      <rect x="913" y="110" width="3" height="9" rx="1" />
+                      <rect x="921" y="110" width="3" height="9" rx="1" />
+                    </g>
+                  </svg>
+                </div>
+              )}
+
+              <button
+                type="button"
+                aria-label={lang === 'VI' ? 'Quay lại' : 'Back'}
+                title={lang === 'VI' ? 'Quay lại' : 'Back'}
+                onMouseEnter={() => sound.playHover()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  backToHub();
+                }}
+                className="memory-terminal-back-btn"
+              >
+                <svg
+                  viewBox="0 0 28 28"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-7 h-7"
+                >
+                  <path
+                    d="M18.5 5L14.2 9.3M11.6 11.9L9.5 14L18.5 23"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              {/* Bottom-Right Interactive Scan Button (disappears once clicked) */}
+              {clinicScanPhase === 'idle' && (
+                <button
+                  type="button"
+                  aria-label="Scan"
+                  onMouseEnter={() => sound.playHover()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sound.playSelect();
+                    setClinicScanPhase('scanning');
+                  }}
+                  className="restore-clinic-scan-btn"
+                >
+                  <AssetImg
+                    remoteSrc={ASSETS.scanButton.remote}
+                    rawRemoteSrc={ASSETS.scanButton.rawRemote}
+                    localSrc={ASSETS.scanButton.local}
+                    alt="Scan"
+                    className="restore-clinic-scan-img"
+                  />
+                </button>
+              )}
+
+              {/* Bottom-Center Holographic "Start" Button on the Square Grid (same style as choice buttons) */}
+              {clinicDialogueStep === 3 && (
+                <button
+                  type="button"
+                  aria-label="Start"
+                  onMouseEnter={() => sound.playHover()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    sound.playSuccess();
+                    setClinicDialogueStep(4);
+                  }}
+                  className="restore-clinic-start-btn"
+                >
+                  <svg
+                    className="restore-clinic-choice-svg"
+                    viewBox="0 0 356 118"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <defs>
+                      <linearGradient id="clinicStartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#123258" stopOpacity="0.86" />
+                        <stop offset="52%" stopColor="#1c6196" stopOpacity="0.90" />
+                        <stop offset="86%" stopColor="#2ca6d4" stopOpacity="0.94" />
+                        <stop offset="100%" stopColor="#58def8" stopOpacity="0.97" />
+                      </linearGradient>
+                      <radialGradient id="clinicStartBotGlow" cx="0.5" cy="1" r="0.65">
+                        <stop offset="0%" stopColor="#affbff" stopOpacity="0.55" />
+                        <stop offset="60%" stopColor="#48d8f8" stopOpacity="0.2" />
+                        <stop offset="100%" stopColor="#123258" stopOpacity="0" />
+                      </radialGradient>
+                    </defs>
+
+                    {/* Main Rectangular Holographic Fill */}
+                    <rect
+                      x="10"
+                      y="10"
+                      width="336"
+                      height="98"
+                      rx="2"
+                      fill="url(#clinicStartGrad)"
+                    />
+                    <rect
+                      x="10"
+                      y="10"
+                      width="336"
+                      height="98"
+                      rx="2"
+                      fill="url(#clinicStartBotGlow)"
+                    />
+
+                    {/* Thin Cyan Inner Border */}
+                    <rect
+                      x="10"
+                      y="10"
+                      width="336"
+                      height="98"
+                      rx="2"
+                      stroke="#68e4fc"
+                      strokeOpacity="0.5"
+                      strokeWidth="1.4"
+                    />
+
+                    {/* Bright Cyan Bottom Rim Highlight */}
+                    <line
+                      x1="14"
+                      y1="107.5"
+                      x2="342"
+                      y2="107.5"
+                      stroke="#a8fbff"
+                      strokeWidth="2.6"
+                    />
+
+                    {/* 4 Outer Cyan Corner Brackets */}
+                    <path
+                      d="M 4 23 V 4 H 23 M 333 4 H 352 V 23 M 352 95 V 114 H 333 M 23 114 H 4 V 95"
+                      stroke="#7ceeff"
+                      strokeWidth="2.8"
+                      strokeLinecap="square"
+                    />
+
+                    {/* Top-Left & Top-Right Micro Horizontal Tech Ticks */}
+                    <line
+                      x1="34"
+                      y1="4"
+                      x2="46"
+                      y2="4"
+                      stroke="#7ceeff"
+                      strokeOpacity="0.75"
+                      strokeWidth="2"
+                    />
+                    <line
+                      x1="310"
+                      y1="4"
+                      x2="322"
+                      y2="4"
+                      stroke="#7ceeff"
+                      strokeOpacity="0.75"
+                      strokeWidth="2"
+                    />
+                  </svg>
+
+                  <span className="restore-clinic-start-label">Start</span>
+                </button>
+              )}
+
+              {/* Step 4: Bottom Grid Narrative Prompt & Two Holographic Choice Buttons */}
+              {clinicDialogueStep === 4 && (
+                <div className="restore-clinic-choice-panel">
+                  <p className="restore-clinic-choice-prompt">
+                    {MAINTENANCE_EYE_STEP_TEXT.prompt}
+                  </p>
+
+                  <div className="restore-clinic-choice-row">
+                    {MAINTENANCE_EYE_STEP_TEXT.choices.map((choiceLabel, idx) => (
+                      <button
+                        key={choiceLabel}
+                        type="button"
+                        onMouseEnter={() => sound.playHover()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          sound.playSelect();
+                        }}
+                        className="restore-clinic-choice-btn"
+                      >
+                        <svg
+                          className="restore-clinic-choice-svg"
+                          viewBox="0 0 356 118"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          preserveAspectRatio="none"
+                          aria-hidden="true"
+                        >
+                          <defs>
+                            <linearGradient
+                              id={`clinicChoiceGrad-${idx}`}
+                              x1="0"
+                              y1="0"
+                              x2="0"
+                              y2="1"
+                            >
+                              <stop offset="0%" stopColor="#123258" stopOpacity="0.86" />
+                              <stop offset="52%" stopColor="#1c6196" stopOpacity="0.90" />
+                              <stop offset="86%" stopColor="#2ca6d4" stopOpacity="0.94" />
+                              <stop offset="100%" stopColor="#58def8" stopOpacity="0.97" />
+                            </linearGradient>
+                            <radialGradient
+                              id={`clinicChoiceBotGlow-${idx}`}
+                              cx="0.5"
+                              cy="1"
+                              r="0.65"
+                            >
+                              <stop offset="0%" stopColor="#affbff" stopOpacity="0.55" />
+                              <stop offset="60%" stopColor="#48d8f8" stopOpacity="0.2" />
+                              <stop offset="100%" stopColor="#123258" stopOpacity="0" />
+                            </radialGradient>
+                          </defs>
+
+                          {/* Main Rectangular Holographic Fill */}
+                          <rect
+                            x="10"
+                            y="10"
+                            width="336"
+                            height="98"
+                            rx="2"
+                            fill={`url(#clinicChoiceGrad-${idx})`}
+                          />
+                          <rect
+                            x="10"
+                            y="10"
+                            width="336"
+                            height="98"
+                            rx="2"
+                            fill={`url(#clinicChoiceBotGlow-${idx})`}
+                          />
+
+                          {/* Thin Cyan Inner Border */}
+                          <rect
+                            x="10"
+                            y="10"
+                            width="336"
+                            height="98"
+                            rx="2"
+                            stroke="#68e4fc"
+                            strokeOpacity="0.5"
+                            strokeWidth="1.4"
+                          />
+
+                          {/* Bright Cyan Bottom Rim Highlight */}
+                          <line
+                            x1="14"
+                            y1="107.5"
+                            x2="342"
+                            y2="107.5"
+                            stroke="#a8fbff"
+                            strokeWidth="2.6"
+                          />
+
+                          {/* 4 Outer Cyan Corner Brackets matching reference screenshot */}
+                          <path
+                            d="M 4 23 V 4 H 23 M 333 4 H 352 V 23 M 352 95 V 114 H 333 M 23 114 H 4 V 95"
+                            stroke="#7ceeff"
+                            strokeWidth="2.8"
+                            strokeLinecap="square"
+                          />
+
+                          {/* Top-Left & Top-Right Micro Horizontal Tech Ticks */}
+                          <line
+                            x1="34"
+                            y1="4"
+                            x2="46"
+                            y2="4"
+                            stroke="#7ceeff"
+                            strokeOpacity="0.75"
+                            strokeWidth="2"
+                          />
+                          <line
+                            x1="310"
+                            y1="4"
+                            x2="322"
+                            y2="4"
+                            stroke="#7ceeff"
+                            strokeOpacity="0.75"
+                            strokeWidth="2"
+                          />
+                        </svg>
+
+                        <span className="restore-clinic-choice-label">{choiceLabel}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
