@@ -1,0 +1,9 @@
+{
+  "name": "Trăng Soi Dặm Trường - SK",
+  "short_name": "TSDT - SK",
+  "start_url": "/glitchtopia",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07060f",
+  "theme_color": "#07060f"
+}
