@@ -3,9 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { SiteHeader } from './components/SiteHeader';
 import { sound } from './utils/sound';
+
+const RobotTouchSection = React.lazy(() =>
+  import('./components/RobotTouchSection').then((m) => ({
+    default: m.RobotTouchSection,
+  }))
+);
 
 const CLOUDINARY_OPT = 'https://res.cloudinary.com/trangsoidamtruong/image/upload/f_auto,q_auto';
 const CLOUDINARY_RAW = 'https://res.cloudinary.com/trangsoidamtruong/image/upload';
@@ -60,13 +66,13 @@ const ASSETS = {
     // Keep animated WebP original URL untouched so all animation frames play smoothly
     remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359973/scan-button.webp',
     rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359973/scan-button.webp',
-    local: '/assets/aistudio/scan-button.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359973/scan-button.webp',
   },
   chibiCare: {
     // Keep animated WebP original URL untouched so all animation frames play smoothly
     remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794364780/chibi-care.webp',
     rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794364780/chibi-care.webp',
-    local: '/assets/aistudio/chibi-care.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794364780/chibi-care.webp',
   },
   chibiEyeBattery: {
     // Keep animated WebP original URL untouched so all animation frames play smoothly
@@ -80,10 +86,52 @@ const ASSETS = {
     rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794386034/chibi1-eye.webp',
     local: '/assets/aistudio/chibi1-eye.webp',
   },
+  chibiScan: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794452562/chibi-scan.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794452562/chibi-scan.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794452562/chibi-scan.webp',
+  },
+  chibiScan2: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794494141/chibi-scan2.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794494141/chibi-scan2.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794494141/chibi-scan2.webp',
+  },
+  chibiBattery: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794386035/chibi1-battery.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794386035/chibi1-battery.webp',
+    local: '/assets/aistudio/chibi1-battery.webp',
+  },
+  chibiStarTorn: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794395358/chibi2-startorn.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794395358/chibi2-startorn.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794395358/chibi2-startorn.webp',
+  },
+  chibiPlantPatch: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443153/chibi3-plantpatch.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443153/chibi3-plantpatch.webp',
+    local: '/assets/aistudio/chibi3-plantpatch.webp',
+  },
+  chibiPlant: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443153/chibi3-plant.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443153/chibi3-plant.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443153/chibi3-plant.webp',
+  },
+  chibiPatch: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443152/chibi3-patch.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443152/chibi3-patch.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794443152/chibi3-patch.webp',
+  },
   scanning: {
-    remote: `${CLOUDINARY_OPT}/v1794359972/scanning.webp`,
-    rawRemote: `${CLOUDINARY_RAW}/v1794359972/scanning.webp`,
-    local: '/assets/aistudio/scanning.webp',
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359972/scanning.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359972/scanning.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794359972/scanning.webp',
   },
   chibiIdle: {
     // Keep animated WebP original URL untouched so all animation frames play smoothly
@@ -96,6 +144,18 @@ const ASSETS = {
     remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794227454/chibi-happy.webp',
     rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794227454/chibi-happy.webp',
     local: '/assets/aistudio/chibi-happy.webp',
+  },
+  chibiPuzzled: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794548197/chibi-puzzled.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794548197/chibi-puzzled.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794548197/chibi-puzzled.webp',
+  },
+  chibiQuestion: {
+    // Keep animated WebP original URL untouched so all animation frames play smoothly
+    remote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794538025/chibi-question.webp',
+    rawRemote: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794538025/chibi-question.webp',
+    local: 'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794538025/chibi-question.webp',
   },
   computer0: {
     remote: `${CLOUDINARY_OPT}/v1794222624/computer-0.webp`,
@@ -117,12 +177,49 @@ const ASSETS = {
     rawRemote: `${CLOUDINARY_RAW}/v1794353564/plant.webp`,
     local: '/assets/aistudio/plant.webp',
   },
+  robot: {
+    remote: `${CLOUDINARY_OPT}/v1794405306/robot.webp`,
+    rawRemote: `${CLOUDINARY_RAW}/v1794405306/robot.webp`,
+    local: '/assets/aistudio/robot.webp',
+  },
 };
+
+// Delicately sized micro bubbles synced to the 2780ms chibi-question cycle so bubbles return right as speech ends
+const ROBOT_BURST_BUBBLES = [
+  // Upper cluster (rising gently upward toward window arch)
+  { id: 1, dx: 38, dy: -55, size: 15, delay: 0, dur: 2.15 },
+  { id: 2, dx: 72, dy: -80, size: 8, delay: 50, dur: 2.3 },
+  { id: 3, dx: 98, dy: -110, size: 11, delay: 90, dur: 2.35 },
+  { id: 4, dx: 125, dy: -95, size: 20, delay: 30, dur: 2.5 },
+  { id: 5, dx: 150, dy: -125, size: 10, delay: 120, dur: 2.45 },
+  { id: 6, dx: 58, dy: -32, size: 7, delay: 20, dur: 2.1 },
+  { id: 7, dx: -28, dy: -38, size: 10, delay: 10, dur: 2.0 },
+  // Rightward cluster (drifting into window center)
+  { id: 8, dx: 85, dy: -10, size: 9, delay: 60, dur: 2.25 },
+  { id: 9, dx: 115, dy: 12, size: 16, delay: 40, dur: 2.4 },
+  { id: 10, dx: 148, dy: -24, size: 8, delay: 100, dur: 2.35 },
+  { id: 11, dx: 175, dy: 28, size: 13, delay: 80, dur: 2.55 },
+  { id: 12, dx: 215, dy: -38, size: 10, delay: 150, dur: 2.6 },
+  { id: 13, dx: 245, dy: 50, size: 12, delay: 120, dur: 2.65 },
+  // Lower cluster (drifting downward toward chibi head and room)
+  { id: 14, dx: 50, dy: 50, size: 9, delay: 40, dur: 2.15 },
+  { id: 15, dx: 78, dy: 78, size: 14, delay: 80, dur: 2.35 },
+  { id: 16, dx: 105, dy: 110, size: 8, delay: 110, dur: 2.45 },
+  { id: 17, dx: -35, dy: 38, size: 9, delay: 20, dur: 2.1 },
+  { id: 18, dx: -15, dy: 80, size: 7, delay: 60, dur: 2.1 },
+  { id: 19, dx: 32, dy: 118, size: 8, delay: 90, dur: 2.3 },
+  { id: 20, dx: 135, dy: 65, size: 11, delay: 70, dur: 2.35 },
+  { id: 21, dx: 185, dy: 92, size: 7, delay: 130, dur: 2.55 },
+  { id: 22, dx: 158, dy: -62, size: 8, delay: 110, dur: 2.45 },
+  { id: 23, dx: 45, dy: -85, size: 6, delay: 80, dur: 2.25 },
+  { id: 24, dx: 135, dy: -140, size: 7, delay: 140, dur: 2.5 },
+  { id: 25, dx: 195, dy: -8, size: 9, delay: 110, dur: 2.5 },
+];
 
 const COMPUTER_SKINS = [ASSETS.computer0, ASSETS.computer1, ASSETS.computer2];
 
 // ============================================================================
-// NỘI DUNG BẢNG DIAGNOSTIC CHECKLIST (Dễ dàng chỉnh sửa chữ tại đây)
+// NỘI DUNG BẢNG DIAGNOSTIC CHECKLIST LOG - 1, LOG - 2 & LOG - 3 (Dễ dàng chỉnh sửa chữ tại đây)
 // ============================================================================
 const DIAGNOSTIC_CHECKLIST_TEXT = {
   title: 'Diagnostic Checklist',
@@ -141,13 +238,747 @@ const DIAGNOSTIC_CHECKLIST_TEXT = {
   ],
 };
 
+const DIAGNOSTIC_CHECKLIST_LOG2_TEXT = {
+  title: 'Diagnostic Checklist',
+  subtitle: 'DIAGNOSIS   REPORT',
+  items: [
+    {
+      id: 'gyroscope',
+      iconType: 'brain' as const,
+      lines: ['Gyroscope failure.', 'Sudden dizziness.'],
+    },
+    {
+      id: 'torso',
+      iconType: 'body' as const,
+      lines: ['Torn clothes have', 'exposed the torso.'],
+    },
+  ],
+};
+
+const DIAGNOSTIC_CHECKLIST_LOG3_TEXT = {
+  title: 'Diagnostic Checklist',
+  subtitle: 'DIAGNOSIS   REPORT',
+  items: [
+    {
+      id: 'eyepatch',
+      iconType: 'face' as const,
+      lines: ['Damaged sensor. Using', 'an eyepatch.'],
+    },
+    {
+      id: 'plants',
+      iconType: 'brain' as const,
+      lines: ['Plants are sprouting in', 'his hair.'],
+    },
+  ],
+};
+
+const DIAGNOSTIC_CHECKLIST_LOG4_TEXT = {
+  title: 'Diagnostic Checklist',
+  subtitle: 'DIAGNOSIS   REPORT',
+  items: [
+    {
+      id: 'vision',
+      iconType: 'face' as const,
+      lines: ['Optical interference.', 'Seeing double or triple.'],
+    },
+    {
+      id: 'battery',
+      iconType: 'body' as const,
+      lines: ['Warning! Battery level is', 'low.'],
+    },
+  ],
+};
+
+const DIAGNOSTIC_CHECKLIST_LOG5_TEXT = {
+  title: 'Diagnostic Checklist',
+  subtitle: 'DIAGNOSIS   REPORT',
+  items: [
+    {
+      id: 'sprout',
+      iconType: 'brain' as const,
+      lines: ['Photosynthesis add-on', 'sprouting in his hair.'],
+    },
+    {
+      id: 'circuits',
+      iconType: 'face' as const,
+      lines: ['Circuitry visible below', 'the lower eyelid.'],
+    },
+  ],
+};
+
 // ============================================================================
-// NỘI DUNG BƯỚC SỬA CHỮA MẮT SAU KHI NHẤN START (Dễ dàng chỉnh sửa chữ tại đây)
+// THOẠI CỐ ĐỊNH CHUNG CHO MỌI LOG TRONG RESTORE CLINIC
 // ============================================================================
-const MAINTENANCE_EYE_STEP_TEXT = {
+interface ClinicDialogueLine {
+  speaker: 'MC' | 'X';
+  lines: readonly string[];
+}
+
+interface MaintenanceStep1Config {
+  prompt: string;
+  choices: readonly [string, string];
+  afterScanQuotes: {
+    choice0: readonly string[];
+    choice1: readonly string[];
+  };
+}
+
+interface MaintenanceStep2Config {
+  prompt: string;
+  choices: readonly [string, string];
+  afterScanQuotes: {
+    choice0: readonly string[];
+    choice1: readonly string[];
+  };
+  postCompleteDialogue: {
+    choice0_0: readonly ClinicDialogueLine[];
+    choice0_1: readonly ClinicDialogueLine[];
+    choice1_0: readonly ClinicDialogueLine[];
+    choice1_1: readonly ClinicDialogueLine[];
+  };
+}
+
+const FIXED_CLINIC_DIALOGUE = {
+  afterInitialScanX: [
+    'System error. I need',
+    'some time for repairs.',
+  ] as const,
+  afterInitialScanMC: [
+    'Then let me switch to',
+    'caretaker mode.',
+  ] as const,
+  completeBannerText: 'Complete!',
+  completeQuoteLines: [
+    'Fixed. Now I can rest',
+    'with a full battery.',
+  ] as const,
+  tapToContinueText: 'Tap to continue',
+};
+
+// ============================================================================
+// NỘI DUNG CÁC BƯỚC SỬA CHỮA & ĐỐI THOẠI CHO LOG - 1 ĐẾN LOG - 5
+// ============================================================================
+const DEFAULT_URGENT_DIALOGUE: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'MC',
+    lines: ['You remind me of a', 'nightmare I had.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['In it, you became a', 'super alien.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Your eyes shot lasers and', 'ended everything!'],
+  },
+  {
+    speaker: 'X',
+    lines: ['...My eyes will be closed', 'for our dates from now on?'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Why is the end of the world', 'insane in my dreams?'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Ending the world requires', 'effort. Keep it simple.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Leaning on me is your easy', 'way to recharge?'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Yes. I'm almost fully", 'charged.'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Now I'll be a little bad with", 'the one closet to me.'],
+  },
+];
+
+const DEFAULT_LOW_POWER_DIALOGUE: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'MC',
+    lines: ['You remind me of a', 'nightmare I had.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['In it, you became a', 'super alien.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Your eyes shot lasers and', 'ended everything!'],
+  },
+  {
+    speaker: 'X',
+    lines: ['...My eyes will be closed', 'for our dates from now on?'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Why is the end of the world', 'insane in my dreams?'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Ending the world requires', 'effort. Keep it simple.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Leaning on me is your easy', 'way to recharge?'],
+  },
+  {
+    speaker: 'X',
+    lines: ["I'm already doing what I", 'want the most.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['The end of the world can', 'wait.'],
+  },
+];
+
+const MAINTENANCE_EYE_STEP_TEXT: MaintenanceStep1Config = {
   prompt:
     "The exposed circuitry looks like face decor, though Xavier doesn't seem to notice.",
-  choices: ['Use weilding gun', 'Even it out'] as const,
+  choices: ['Use welding gun', 'Even it out'],
+  afterScanQuotes: {
+    choice0: [
+      'I kinda miss the feeling of',
+      'havng your "gun" pointed at me.',
+    ],
+    choice1: [
+      'One side is a malfunction,',
+      'but both sides make it',
+      'fashion? Got it.',
+    ],
+  },
+};
+
+const MAINTENANCE_BATTERY_STEP_TEXT: MaintenanceStep2Config = {
+  prompt:
+    "There's never enough energy, time off, or money. At least an android's battery is easy to recharge.",
+  choices: ['Urgently recharge', 'Use low power mode'],
+  afterScanQuotes: {
+    choice0: ['I thought your hand was a', 'cable. It works, though.'],
+    choice1: [
+      "Xavier's latest low power",
+      'mode name: extra clingy.',
+    ],
+  },
+  postCompleteDialogue: {
+    choice0_0: DEFAULT_URGENT_DIALOGUE,
+    choice0_1: DEFAULT_LOW_POWER_DIALOGUE,
+    choice1_0: DEFAULT_URGENT_DIALOGUE,
+    choice1_1: DEFAULT_LOW_POWER_DIALOGUE,
+  },
+};
+
+// --- LOG - 2 ---
+const LOG2_DIALOGUE_PART1_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ["We'll finish before Prehistoric", 'Metropolis airs.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['If we went back to that', 'time, what would you do?'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Solve the energy problem.', "Don't worry..."],
+  },
+  {
+    speaker: 'X',
+    lines: ['Destruction is possible by', 'outliving your target.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['So prehistoric time travel', 'is a survival game?'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Unlike the present, it's", 'full of uncertainty.'],
+  },
+];
+
+const LOG2_DIALOGUE_PART1_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ["We'll finish before Prehistoric", 'Metropolis airs.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['If we went back to that', 'time, what would you do?'],
+  },
+  {
+    speaker: 'X',
+    lines: ["I'd take you to see cute,", 'fluffy mammoths.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Be careful when petting.', 'They might bite you.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['So prehistoric time travel', 'is a survival game?'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Unlike the present, it's", 'full of uncertainty.'],
+  },
+];
+
+const LOG2_DIALOGUE_PART2_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'MC',
+    lines: ["Is that why you're drawn", 'to it?'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Don't you feel the same", 'way?'],
+  },
+  {
+    speaker: 'X',
+    lines: ['If a new world appeared,', "we'd look at it..."],
+  },
+  {
+    speaker: 'X',
+    lines: ['Even if we had to risk', 'opening the door.'],
+  },
+];
+
+const LOG2_DIALOGUE_PART2_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'MC',
+    lines: ['If we go, we stick together.', 'No exceptions.'],
+  },
+  {
+    speaker: 'X',
+    lines: ["That's not just a rule for", 'prehistoric times.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['It applies wherever we go.'],
+  },
+];
+
+const MAINTENANCE_GYRO_STEP_TEXT: MaintenanceStep1Config = {
+  prompt:
+    'Xavier says the stars on the ceiling are spinning. I need to help him before he gets dizzier!',
+  choices: ['Lull him to sleep', 'Calibrate gyroscope'],
+  afterScanQuotes: {
+    choice0: ['Zzz.'],
+    choice1: [
+      'Did you put the spinning',
+      'stars away?',
+    ],
+  },
+};
+
+const MAINTENANCE_LOG2_STEP2_TEXT: MaintenanceStep2Config = {
+  prompt:
+    "Talk about a wardrobe malfunction! He points out that there's no one else here.",
+  choices: ['Lend him my jacket', 'Use my hands'],
+  afterScanQuotes: {
+    choice0: [
+      'Your jacket is tight, I',
+      "hope it doesn't tear.",
+    ],
+    choice1: [
+      'Your hand is hot. You',
+      'need more help than me.',
+    ],
+  },
+  postCompleteDialogue: {
+    choice0_0: [...LOG2_DIALOGUE_PART1_A, ...LOG2_DIALOGUE_PART2_A],
+    choice0_1: [...LOG2_DIALOGUE_PART1_A, ...LOG2_DIALOGUE_PART2_B],
+    choice1_0: [...LOG2_DIALOGUE_PART1_B, ...LOG2_DIALOGUE_PART2_A],
+    choice1_1: [...LOG2_DIALOGUE_PART1_B, ...LOG2_DIALOGUE_PART2_B],
+  },
+};
+
+// --- LOG - 3 ---
+const LOG3_DIALOGUE_PART1_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ['I got a new job offer.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['I thought we agreed to', 'stop working hard.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['The pay is excellent.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["...I'm a hard-working", "citizen. What's the job?"],
+  },
+  {
+    speaker: 'X',
+    lines: ['Breaching the electronic', 'brain firewall to upgrade it.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Give them the same shock', 'you gave me.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["I thought I'd feel lost", 'with no orders to follow.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['But anything we do feels', 'fun now.'],
+  },
+];
+
+const LOG3_DIALOGUE_PART1_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ['I got a new job offer.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['I thought we agreed to', 'stop working hard.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['The pay is excellent.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["...I'm a hard-working", "citizen. What's the job?"],
+  },
+  {
+    speaker: 'X',
+    lines: ['Rating a new stabilizer.', 'It is my specialty.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Our taste buds are at', 'stake. Take it seriously.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["I thought I'd feel lost", 'with no orders to follow.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['But anything we do feels', 'fun now.'],
+  },
+];
+
+const LOG3_DIALOGUE_PART2_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ['They say even humans fear', 'freedom sometimes.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Adrift in space and', 'choosing where to go...'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Yet we already found', 'each other.'],
+  },
+];
+
+const LOG3_DIALOGUE_PART2_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ["We don't need orders", 'anymore. We need a reason.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Luckily, we found one in', 'each other.'],
+  },
+];
+
+const MAINTENANCE_PLANT_STEP_TEXT: MaintenanceStep1Config = {
+  prompt:
+    "Plants need to be cared for, even the ones on Xavier's head. I'll water them first, then...",
+  choices: ['Dry his hair', 'Trim grass'],
+  afterScanQuotes: {
+    choice0: [
+      "It's too dry now. The",
+      'grass is moving out.',
+    ],
+    choice1: [
+      "That wasn't just grass...",
+      'It was the real me.',
+    ],
+  },
+};
+
+const MAINTENANCE_LOG3_STEP2_TEXT: MaintenanceStep2Config = {
+  prompt:
+    'Xavier leans in when I\'m to his left. Apparently, the words "I can\'t see" make it an accident.',
+  choices: ['Take after recovery', 'Set a trend'],
+  afterScanQuotes: {
+    choice0: [
+      'My eye is adjusting to the',
+      "light. I'm not winking.",
+    ],
+    choice1: [
+      'Eyepatches are all the',
+      'rage in the Metropolis.',
+    ],
+  },
+  postCompleteDialogue: {
+    choice0_0: [...LOG3_DIALOGUE_PART1_A, ...LOG3_DIALOGUE_PART2_A],
+    choice0_1: [...LOG3_DIALOGUE_PART1_A, ...LOG3_DIALOGUE_PART2_B],
+    choice1_0: [...LOG3_DIALOGUE_PART1_B, ...LOG3_DIALOGUE_PART2_A],
+    choice1_1: [...LOG3_DIALOGUE_PART1_B, ...LOG3_DIALOGUE_PART2_B],
+  },
+};
+
+// --- LOG - 4 ---
+const LOG4_DIALOGUE_PART1_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'MC',
+    lines: ['Sometimes, what you say', 'immediately comes true.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['You predict danger too.'],
+  },
+  {
+    speaker: 'X',
+    lines: ["It's a standard threat", 'assessment.'],
+  },
+  {
+    speaker: 'X',
+    lines: ["But it's more accurate", "when you're around."],
+  },
+  {
+    speaker: 'X',
+    lines: ['Technically, my senses', 'sharpen around you.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['If I really could see the', 'future...'],
+  },
+];
+
+const LOG4_DIALOGUE_PART1_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'MC',
+    lines: ['Sometimes, what you say', 'immediately comes true.'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Like now. You'll look at", 'me unintentionally.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['...How did you know?'],
+  },
+  {
+    speaker: 'X',
+    lines: ['Your waist joint is loose.', "You're leaning my way."],
+  },
+  {
+    speaker: 'X',
+    lines: ['Technically, my senses', 'sharpen around you.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['If I really could see the', 'future...'],
+  },
+];
+
+const LOG4_DIALOGUE_PART2_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ["I'd say every day is good", 'for a walk.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["It'd still be true even", 'when it rains.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['We can share one', 'umbrella.'],
+  },
+];
+
+const LOG4_DIALOGUE_PART2_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ["I'll say I'll be with you", 'every day.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['And future me would say', 'you were right.'],
+  },
+];
+
+const MAINTENANCE_LOG4_STEP1_TEXT: MaintenanceStep1Config = {
+  prompt:
+    "Xavier is seeing double, maybe triple. That's not good. I'll fix him.",
+  choices: ['Offer my shoulder', 'Remove interference'],
+  afterScanQuotes: {
+    choice0: [
+      "There's nothing a nap by",
+      "your side can't fix.",
+    ],
+    choice1: [
+      'The cloning trick finally',
+      'stopped working.',
+    ],
+  },
+};
+
+const MAINTENANCE_LOG4_STEP2_TEXT: MaintenanceStep2Config = {
+  prompt:
+    "There's Xavier when he's relaxed and when he's barely moving. I'll help him recharge!",
+  choices: ['Hug to recharge', 'Charge slowly'],
+  afterScanQuotes: {
+    choice0: [
+      'A hug charges an android',
+      'twice as fast.',
+    ],
+    choice1: [
+      'I want this quiet time',
+      'with you to last.',
+    ],
+  },
+  postCompleteDialogue: {
+    choice0_0: [...LOG4_DIALOGUE_PART1_A, ...LOG4_DIALOGUE_PART2_A],
+    choice0_1: [...LOG4_DIALOGUE_PART1_A, ...LOG4_DIALOGUE_PART2_B],
+    choice1_0: [...LOG4_DIALOGUE_PART1_B, ...LOG4_DIALOGUE_PART2_A],
+    choice1_1: [...LOG4_DIALOGUE_PART1_B, ...LOG4_DIALOGUE_PART2_B],
+  },
+};
+
+// --- LOG - 5 ---
+const LOG5_DIALOGUE_PART1_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ['Let me tell you a story about', 'an ordinary android...'],
+  },
+  {
+    speaker: 'X',
+    lines: ['...Who secretly saved the', 'world more than once.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["Oh! It's The Janitor", 'Android Is A Legend!'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Wrong. It's our story."],
+  },
+  {
+    speaker: 'MC',
+    lines: ["Wait, I'm the legend?", 'Come to think of it...'],
+  },
+  {
+    speaker: 'X',
+    lines: ['There are still plenty of', 'things I dislike.'],
+  },
+  {
+    speaker: 'X',
+    lines: ['But the person I love', 'is here.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["Good thing we're unsung", 'heroes together.'],
+  },
+];
+
+const LOG5_DIALOGUE_PART1_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ['Let me tell you a story about', 'an ordinary android...'],
+  },
+  {
+    speaker: 'X',
+    lines: ['...Who secretly saved the', 'world more than once.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["Oh! It's The Janitor", 'Android Is A Legend!'],
+  },
+  {
+    speaker: 'X',
+    lines: ["Wrong. It's our story."],
+  },
+  {
+    speaker: 'MC',
+    lines: ["Wait, I'm the legend?", 'Come to think of it...'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["This world isn't perfect,", "but it's our home."],
+  },
+  {
+    speaker: 'X',
+    lines: ["It's my home now too."],
+  },
+  {
+    speaker: 'MC',
+    lines: ["Good thing we're unsung", 'heroes together.'],
+  },
+];
+
+const LOG5_DIALOGUE_PART2_A: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ["It's not the secret that", 'makes me feel less alone.'],
+  },
+  {
+    speaker: 'X',
+    lines: ["It's how we want to protect", 'the same things.'],
+  },
+];
+
+const LOG5_DIALOGUE_PART2_B: readonly ClinicDialogueLine[] = [
+  {
+    speaker: 'X',
+    lines: ["So I'm important. Then", 'keep your eyes on me.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ["Got it. It'll be like that", 'android show.'],
+  },
+  {
+    speaker: 'MC',
+    lines: ['Defeat the villain, then', 'fall for him...'],
+  },
+];
+
+const MAINTENANCE_LOG5_STEP1_TEXT: MaintenanceStep1Config = {
+  prompt:
+    'Who installed that photosynthesis add-on? Its only purpose is to look cute...',
+  choices: ['Hide it in his hair', 'Uproot the sprout'],
+  afterScanQuotes: {
+    choice0: ['Did I just get a little', 'taller?'],
+    choice1: ['Huh? My signal receiver', 'went offline.'],
+  },
+};
+
+const MAINTENANCE_LOG5_STEP2_TEXT: MaintenanceStep2Config = {
+  prompt:
+    "Xavier seems to have something on his mind. I'll find a way to cover it up for him.",
+  choices: ['Apply makeup', 'Cover his eyes'],
+  afterScanQuotes: {
+    choice0: [
+      'You are so gentle. I want to',
+      'lean against you and nap',
+      'for a bit.',
+    ],
+    choice1: [
+      "I can't see the circuits",
+      "anymore. I can't see the",
+      'road either.',
+    ],
+  },
+  postCompleteDialogue: {
+    choice0_0: [...LOG5_DIALOGUE_PART1_A, ...LOG5_DIALOGUE_PART2_A],
+    choice0_1: [...LOG5_DIALOGUE_PART1_A, ...LOG5_DIALOGUE_PART2_B],
+    choice1_0: [...LOG5_DIALOGUE_PART1_B, ...LOG5_DIALOGUE_PART2_A],
+    choice1_1: [...LOG5_DIALOGUE_PART1_B, ...LOG5_DIALOGUE_PART2_B],
+  },
 };
 
 export interface ChapterAssetItem {
@@ -232,7 +1063,7 @@ interface FallbackImgProps extends React.ImgHTMLAttributes<HTMLImageElement> {
   onAssetReady?: () => void;
 }
 
-const AssetImg: React.FC<FallbackImgProps> = ({
+const AssetImg: React.FC<FallbackImgProps> = React.memo(({
   remoteSrc,
   rawRemoteSrc,
   localSrc,
@@ -267,9 +1098,14 @@ const AssetImg: React.FC<FallbackImgProps> = ({
       {...rest}
     />
   );
-};
+});
 
-type GlitchtopiaPage = 'hub' | 'memory-terminal' | 'care-log' | 'restore-clinic';
+type GlitchtopiaPage =
+  | 'hub'
+  | 'memory-terminal'
+  | 'care-log'
+  | 'restore-clinic'
+  | 'defense-intercept';
 const GLITCHTOPIA_SLUG = '/glitchtopia';
 
 function getInitialLang(): 'VI' | 'EN' {
@@ -310,6 +1146,13 @@ export default function App() {
   const [hoveredCareLog, setHoveredCareLog] = useState<number | null>(null);
   const [selectedCareLog, setSelectedCareLog] = useState<number | null>(null);
 
+  // Floating Robot Drone bubble burst interaction state:
+  // When clicked, the 3 ambient bubbles disappear, a burst of small bubbles flies out and fades over 1.6s,
+  // then the original 3 ambient bubbles smoothly return.
+  const [isRobotBursting, setIsRobotBursting] = useState<boolean>(false);
+  const [robotBurstKey, setRobotBurstKey] = useState<number>(0);
+  const robotBurstTimerRef = useRef<number | null>(null);
+
   // Restore Clinic scanning phase:
   // - 'idle': scan-button visible, chibi-care visible
   // - 'scanning': scan-button hidden, scanning.webp sweeps from top of head down to hand
@@ -320,8 +1163,73 @@ export default function App() {
   // - 1: top dark-blue bubble ("System error. I need some time for repairs.")
   // - 2: lower-right red bubble ("Then let me switch to caretaker mode." without "Lys Stargazer")
   // - 3: top-center blue holographic "Diagnostic Checklist" board + bottom "Start" button
-  // - 4: zoomed-in chibi1-eye + bottom grid prompt & 2 choice buttons ("Use weilding gun" / "Even it out")
-  const [clinicDialogueStep, setClinicDialogueStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+  // - 4: zoomed-in chibi1-eye + bottom grid prompt & 2 choice buttons ("Use welding gun" / "Even it out")
+  // - 5: zoomed-in chibi-scan playing 1 cycle (7560ms) after clicking either choice button
+  // - 6: zoomed-in chibi1-battery + top dark-blue speech bubble ("I kinda miss the feeling of havng your "gun" pointed at me.")
+  // - 7: Diagnostic Checklist board (with "Circuitry visible below..." dimmed) + bottom "Continue" button
+  // - 8: zoomed-in chibi1-battery + bottom grid prompt & 2 choice buttons ("Urgently recharge" / "Use low power mode")
+  // - 9: zoomed-in chibi-scan2 playing 1 cycle (5046ms) after clicking "Urgently recharge" or "Use low power mode"
+  // - 10: zoomed-in chibi-idle + initial speech bubble ("I thought your hand was a cable..." or "Xavier's latest low power mode name...")
+  // - 11: full-body chibi-happy playing 1 cycle (1950ms) -> chibi-idle + top "Complete!" banner + speech bubble ("Fixed. Now I can rest with a full battery.") + bottom "Tap to continue"
+  // - 12: full-body chibi-idle + 9-turn X (blue) / MC (red) dialogue sequence
+  const [clinicDialogueStep, setClinicDialogueStep] = useState<
+    0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12
+  >(0);
+  const [firstChoiceIndex, setFirstChoiceIndex] = useState<0 | 1>(0);
+  const [batteryChoiceIndex, setBatteryChoiceIndex] = useState<0 | 1>(0);
+  const [batteryDialogueIdx, setBatteryDialogueIdx] = useState<number>(0);
+  const maintenanceTextRef = useRef<HTMLSpanElement | null>(null);
+
+  const activeStep1Config =
+    selectedCareLog === 5
+      ? MAINTENANCE_LOG5_STEP1_TEXT
+      : selectedCareLog === 4
+        ? MAINTENANCE_LOG4_STEP1_TEXT
+        : selectedCareLog === 3
+          ? MAINTENANCE_PLANT_STEP_TEXT
+          : selectedCareLog === 2
+            ? MAINTENANCE_GYRO_STEP_TEXT
+            : MAINTENANCE_EYE_STEP_TEXT;
+
+  const activeStep2Config =
+    selectedCareLog === 5
+      ? MAINTENANCE_LOG5_STEP2_TEXT
+      : selectedCareLog === 4
+        ? MAINTENANCE_LOG4_STEP2_TEXT
+        : selectedCareLog === 3
+          ? MAINTENANCE_LOG3_STEP2_TEXT
+          : selectedCareLog === 2
+            ? MAINTENANCE_LOG2_STEP2_TEXT
+            : MAINTENANCE_BATTERY_STEP_TEXT;
+  const chibiScanBlobRef = useRef<Blob | null>(null);
+  const activeChibiScanUrlRef = useRef<string | null>(null);
+  const [chibiScanPlaySrc, setChibiScanPlaySrc] = useState<string | null>(null);
+  const [isChibiScanReady, setIsChibiScanReady] = useState<boolean>(false);
+  const [isBatteryPreRevealed, setIsBatteryPreRevealed] = useState<boolean>(false);
+
+  const chibiScan2BlobRef = useRef<Blob | null>(null);
+  const activeChibiScan2UrlRef = useRef<string | null>(null);
+  const [chibiScan2PlaySrc, setChibiScan2PlaySrc] = useState<string | null>(null);
+  const [isChibiScan2Ready, setIsChibiScan2Ready] = useState<boolean>(false);
+  const [isIdlePreRevealed, setIsIdlePreRevealed] = useState<boolean>(false);
+
+  // Step 11 (Complete!) chibi-happy 1-cycle -> chibi-idle state & timers
+  const activeClinicHappyUrlRef = useRef<string | null>(null);
+  const [clinicHappyPlaySrc, setClinicHappyPlaySrc] = useState<string | null>(null);
+  const [isClinicIdleMasked, setIsClinicIdleMasked] = useState<boolean>(false);
+  const clinicRevealIdleTimerRef = useRef<number | null>(null);
+  const clinicHideHappyTimerRef = useRef<number | null>(null);
+
+  const clearClinicHappyTimers = useCallback(() => {
+    if (clinicRevealIdleTimerRef.current !== null) {
+      window.clearTimeout(clinicRevealIdleTimerRef.current);
+      clinicRevealIdleTimerRef.current = null;
+    }
+    if (clinicHideHappyTimerRef.current !== null) {
+      window.clearTimeout(clinicHideHappyTimerRef.current);
+      clinicHideHappyTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (clinicScanPhase !== 'scanning') return;
@@ -332,17 +1240,124 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, [clinicScanPhase]);
 
-  // Chibi happy interaction & speech bubble state
-  // - happyBlobRef: cached in-memory Blob of chibi-happy.webp so each click creates a fresh
-  //   ObjectURL that starts WebP playback strictly from Frame 0 (0ms) with zero network latency
+  // Once chibi-scan starts playing (step 5 & ready), reveal zoomed chibi1-battery underneath at 7400ms
+  // and switch cleanly to step 6 at 7470ms (before 7560ms loop-back) so there is zero blink/flicker.
+  useEffect(() => {
+    if (clinicDialogueStep !== 5 || !isChibiScanReady) return;
+    setIsBatteryPreRevealed(false);
+    const revealTimer = window.setTimeout(() => {
+      setIsBatteryPreRevealed(true);
+    }, 7400);
+    const switchTimer = window.setTimeout(() => {
+      setClinicDialogueStep(6);
+      setIsBatteryPreRevealed(false);
+    }, 7470);
+    return () => {
+      window.clearTimeout(revealTimer);
+      window.clearTimeout(switchTimer);
+    };
+  }, [clinicDialogueStep, isChibiScanReady]);
+
+  // Once chibi-scan2 starts playing (step 9 & ready, 174 frames * 29ms = 5046ms), reveal zoomed chibi-idle
+  // underneath at 4890ms and switch cleanly to step 10 at 4960ms so there is zero blink/flicker.
+  useEffect(() => {
+    if (clinicDialogueStep !== 9 || !isChibiScan2Ready) return;
+    setIsIdlePreRevealed(false);
+    const revealTimer = window.setTimeout(() => {
+      setIsIdlePreRevealed(true);
+    }, 4890);
+    const switchTimer = window.setTimeout(() => {
+      setBatteryDialogueIdx(0);
+      setClinicDialogueStep(10);
+      setIsIdlePreRevealed(false);
+    }, 4960);
+    return () => {
+      window.clearTimeout(revealTimer);
+      window.clearTimeout(switchTimer);
+    };
+  }, [clinicDialogueStep, isChibiScan2Ready]);
+
+  // Animate "Maintenance in progress ...%" smoothly from 0% to 100% whenever a scan is active
+  const isMaintenanceScanning =
+    clinicScanPhase === 'scanning' ||
+    (clinicScanPhase === 'done' &&
+      (clinicDialogueStep === 5 || clinicDialogueStep === 9));
+
+  useEffect(() => {
+    const updateLabel = (pct: number) => {
+      if (maintenanceTextRef.current) {
+        maintenanceTextRef.current.textContent = `Maintenance in progress ${pct}%`;
+      }
+    };
+
+    if (!isMaintenanceScanning) {
+      updateLabel(0);
+      return;
+    }
+
+    const durationMs =
+      clinicScanPhase === 'scanning'
+        ? 2060
+        : clinicDialogueStep === 5
+          ? 7380
+          : 4880;
+    const isWaitDecoding =
+      (clinicDialogueStep === 5 && !isChibiScanReady) ||
+      (clinicDialogueStep === 9 && !isChibiScan2Ready);
+
+    if (isWaitDecoding) {
+      updateLabel(0);
+      return;
+    }
+
+    updateLabel(0);
+    const startTime = performance.now();
+    let rafId = 0;
+    let lastPct = -1;
+
+    const tick = (now: number) => {
+      const ratio = Math.min(1, Math.max(0, (now - startTime) / durationMs));
+      const pct = Math.min(100, Math.round(ratio * 100));
+      if (pct !== lastPct) {
+        lastPct = pct;
+        updateLabel(pct);
+      }
+      if (ratio < 1) {
+        rafId = window.requestAnimationFrame(tick);
+      }
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [
+    isMaintenanceScanning,
+    clinicScanPhase,
+    clinicDialogueStep,
+    isChibiScanReady,
+    isChibiScan2Ready,
+  ]);
+
+  // Chibi reaction interaction (happy / puzzled / question) & speech bubble state
+  // Cached in-memory Blobs so each click creates a fresh ObjectURL that starts WebP playback strictly from Frame 0 (0ms)
   const happyBlobRef = useRef<Blob | null>(null);
+  const puzzledBlobRef = useRef<Blob | null>(null);
+  const questionBlobRef = useRef<Blob | null>(null);
   const activeObjectUrlRef = useRef<string | null>(null);
   const isHappyPlayingRef = useRef<boolean>(false);
+  const activeReactionSourceRef = useRef<'chibi' | 'plant' | 'computer' | 'robot'>('chibi');
+  const activeReactionPoseRef = useRef<'happy' | 'puzzled' | 'question'>('happy');
   const [happyPlaySrc, setHappyPlaySrc] = useState<string | null>(null);
   const [happyPlayKey, setHappyPlayKey] = useState<number>(0);
+  const [activeReactionPose, setActiveReactionPose] = useState<
+    'happy' | 'puzzled' | 'question'
+  >('happy');
   const [isIdleMasked, setIsIdleMasked] = useState<boolean>(false);
   const [showSpeechBubble, setShowSpeechBubble] = useState<boolean>(false);
-  const [speechSource, setSpeechSource] = useState<'chibi' | 'plant'>('chibi');
+  const [speechSource, setSpeechSource] = useState<
+    'chibi' | 'plant' | 'computer' | 'robot'
+  >('chibi');
 
   const revealIdleTimerRef = useRef<number | null>(null);
   const hideHappyTimerRef = useRef<number | null>(null);
@@ -358,18 +1373,20 @@ export default function App() {
     }
   }, []);
 
-  // Pre-fetch chibi-happy.webp binary into RAM once so every click plays from Frame 0 instantaneously
+  // Pre-fetch chibi-happy, chibi-puzzled, and chibi-question binaries into RAM once so every click plays from Frame 0 instantaneously
   useEffect(() => {
     let cancelled = false;
-    async function loadHappyBlob() {
-      const candidates = [ASSETS.chibiHappy.remote, ASSETS.chibiHappy.local];
+    async function loadBlob(
+      candidates: string[],
+      targetRef: React.MutableRefObject<Blob | null>
+    ) {
       for (const url of candidates) {
         try {
           const res = await fetch(url);
           if (res.ok) {
             const buf = await res.arrayBuffer();
             if (!cancelled) {
-              happyBlobRef.current = new Blob([buf], { type: 'image/webp' });
+              targetRef.current = new Blob([buf], { type: 'image/webp' });
             }
             return;
           }
@@ -378,7 +1395,9 @@ export default function App() {
         }
       }
     }
-    loadHappyBlob();
+    loadBlob([ASSETS.chibiHappy.remote, ASSETS.chibiHappy.local], happyBlobRef);
+    loadBlob([ASSETS.chibiPuzzled.remote], puzzledBlobRef);
+    loadBlob([ASSETS.chibiQuestion.remote], questionBlobRef);
     return () => {
       cancelled = true;
       clearChibiTimers();
@@ -387,31 +1406,71 @@ export default function App() {
         URL.revokeObjectURL(activeObjectUrlRef.current);
         activeObjectUrlRef.current = null;
       }
+      if (activeChibiScanUrlRef.current) {
+        URL.revokeObjectURL(activeChibiScanUrlRef.current);
+        activeChibiScanUrlRef.current = null;
+      }
+      if (activeChibiScan2UrlRef.current) {
+        URL.revokeObjectURL(activeChibiScan2UrlRef.current);
+        activeChibiScan2UrlRef.current = null;
+      }
+      if (activeClinicHappyUrlRef.current) {
+        URL.revokeObjectURL(activeClinicHappyUrlRef.current);
+        activeClinicHappyUrlRef.current = null;
+      }
+      clearClinicHappyTimers();
     };
-  }, [clearChibiTimers]);
+  }, [clearChibiTimers, clearClinicHappyTimers]);
 
-  const triggerChibiHappy = useCallback(
-    (source: 'chibi' | 'plant') => {
-      setSpeechSource(source);
-
-      // If the happy pose is already running, let it continue playing all the way to the end
-      if (isHappyPlayingRef.current) {
+  const triggerChibiReaction = useCallback(
+    (source: 'chibi' | 'plant' | 'computer' | 'robot') => {
+      // If the exact same source is already playing, let it finish its cycle smoothly
+      if (isHappyPlayingRef.current && activeReactionSourceRef.current === source) {
         return;
       }
 
+      const nextPose: 'happy' | 'puzzled' | 'question' =
+        source === 'computer'
+          ? 'puzzled'
+          : source === 'robot'
+            ? 'question'
+            : source === 'chibi'
+              ? Math.random() < 0.5
+                ? 'happy'
+                : 'puzzled'
+              : 'happy';
+
+      activeReactionSourceRef.current = source;
+      activeReactionPoseRef.current = nextPose;
+      setSpeechSource(source);
+      setActiveReactionPose(nextPose);
       isHappyPlayingRef.current = true;
       clearChibiTimers();
 
+      const blob =
+        nextPose === 'puzzled'
+          ? puzzledBlobRef.current
+          : nextPose === 'question'
+            ? questionBlobRef.current
+            : happyBlobRef.current;
+
+      const fallbackUrl =
+        nextPose === 'puzzled'
+          ? ASSETS.chibiPuzzled.remote
+          : nextPose === 'question'
+            ? ASSETS.chibiQuestion.remote
+            : ASSETS.chibiHappy.remote;
+
       // Create a fresh in-memory ObjectURL so the browser starts WebP animation at Frame 0
       let nextSrc: string;
-      if (happyBlobRef.current) {
+      if (blob) {
         if (activeObjectUrlRef.current) {
           URL.revokeObjectURL(activeObjectUrlRef.current);
         }
-        nextSrc = URL.createObjectURL(happyBlobRef.current);
+        nextSrc = URL.createObjectURL(blob);
         activeObjectUrlRef.current = nextSrc;
       } else {
-        nextSrc = `${ASSETS.chibiHappy.local}?t=${Date.now()}`;
+        nextSrc = `${fallbackUrl}?t=${Date.now()}`;
       }
 
       setHappyPlayKey((k) => k + 1);
@@ -424,9 +1483,9 @@ export default function App() {
     (e: React.MouseEvent) => {
       e.stopPropagation();
       sound.playSuccess();
-      triggerChibiHappy('chibi');
+      triggerChibiReaction('chibi');
     },
-    [triggerChibiHappy]
+    [triggerChibiReaction]
   );
 
   const handlePlantClick = useCallback(
@@ -434,18 +1493,51 @@ export default function App() {
       e.stopPropagation();
       sound.playSelect();
       setPlantFaceIndex((prev) => (prev + 1) % 3);
-      triggerChibiHappy('plant');
+      triggerChibiReaction('plant');
     },
-    [triggerChibiHappy]
+    [triggerChibiReaction]
   );
 
-  const handleComputerClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    sound.playSelect();
-    setComputerSkinIndex((prev) => (prev + 1) % 3);
+  const handleComputerClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      sound.playSelect();
+      setComputerSkinIndex((prev) => (prev + 1) % 3);
+      triggerChibiReaction('computer');
+    },
+    [triggerChibiReaction]
+  );
+
+  const handleRobotClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      sound.playSelect();
+      setIsRobotBursting(true);
+      setRobotBurstKey((k) => k + 1);
+      triggerChibiReaction('robot');
+
+      if (robotBurstTimerRef.current !== null) {
+        window.clearTimeout(robotBurstTimerRef.current);
+      }
+      // After 2785ms (1 full chibi-question cycle), all bursting bubbles fade away and the 3 original bubbles return right as the quote ends
+      robotBurstTimerRef.current = window.setTimeout(() => {
+        setIsRobotBursting(false);
+        robotBurstTimerRef.current = null;
+      }, 2785);
+    },
+    [triggerChibiReaction]
+  );
+
+  // Cleanup robot burst timer on unmount
+  useEffect(() => {
+    return () => {
+      if (robotBurstTimerRef.current !== null) {
+        window.clearTimeout(robotBurstTimerRef.current);
+      }
+    };
   }, []);
 
-  // Fired the instant Frame 0 of the fresh chibi-happy ObjectURL is decoded & painted
+  // Fired the instant Frame 0 of the fresh chibi reaction ObjectURL is decoded & painted
   const handleHappyFrameZeroReady = useCallback(() => {
     setIsIdleMasked(true);
     setShowSpeechBubble(true);
@@ -457,20 +1549,35 @@ export default function App() {
       window.clearTimeout(hideHappyTimerRef.current);
     }
 
-    // 1 full happy cycle is 30 frames * 65ms = 1950ms (Frame 0 -> raises hand & smiles -> lowers hand at Frame 29).
-    // Step 1 (at 1885ms): restore idle chibi opacity to 1 underneath BEFORE removing happy layer
+    const src = activeReactionSourceRef.current;
+    const pose = activeReactionPoseRef.current;
+    // Exact 1-cycle durations from WebP ANMF frame headers:
+    // - chibi-happy: 30 frames * 65ms = 1950ms
+    // - chibi-puzzled: 32 frames * 65ms = 2080ms
+    // - chibi-question: 43 frames * 65ms = 2795ms
+    const cycleMs = pose === 'question' ? 2785 : pose === 'puzzled' ? 2070 : 1940;
+    const revealIdleMs = cycleMs - 55;
+
+    // Step 1: restore idle chibi opacity to 1 underneath BEFORE removing reaction layer
     revealIdleTimerRef.current = window.setTimeout(() => {
       setIsIdleMasked(false);
       revealIdleTimerRef.current = null;
-    }, 1885);
+    }, revealIdleMs);
 
-    // Step 2 (at 1940ms, when happy pose ends): unmount happy layer and hide speech bubble simultaneously
+    // Step 2: unmount reaction layer and hide speech bubble simultaneously (and restore robot bubbles if source === 'robot')
     hideHappyTimerRef.current = window.setTimeout(() => {
       setHappyPlaySrc(null);
       setShowSpeechBubble(false);
+      if (src === 'robot') {
+        setIsRobotBursting(false);
+        if (robotBurstTimerRef.current !== null) {
+          window.clearTimeout(robotBurstTimerRef.current);
+          robotBurstTimerRef.current = null;
+        }
+      }
       isHappyPlayingRef.current = false;
       hideHappyTimerRef.current = null;
-    }, 1940);
+    }, cycleMs);
   }, []);
 
   // Ensure URL bar always has the /glitchtopia slug for this event
@@ -510,31 +1617,101 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  // Preload sub-page assets during idle time AFTER main hub is ready so hub assets get 100% initial bandwidth
+  // Sequential low-priority preloader (max 2 concurrent decodes) so Hub animations stay locked at 60fps
+  const preloadedUrlsRef = useRef<Set<string>>(new Set());
+  const enqueuePreload = useCallback((urls: string[]) => {
+    const pending = urls.filter((u) => {
+      if (preloadedUrlsRef.current.has(u)) return false;
+      preloadedUrlsRef.current.add(u);
+      return true;
+    });
+    if (pending.length === 0) return;
+
+    let idx = 0;
+    const loadNext = () => {
+      if (idx >= pending.length) return;
+      const url = pending[idx++];
+      const img = new Image();
+      img.decoding = 'async';
+      img.onload = img.onerror = () => {
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(loadNext);
+        } else {
+          setTimeout(loadNext, 40);
+        }
+      };
+      img.src = url;
+    };
+
+    // Run 2 sequential workers in parallel
+    loadNext();
+    loadNext();
+  }, []);
+
+  // Tier 1: After Hub wall is ready, gently preload Hub interactive skins & sub-page walls
   useEffect(() => {
     if (!isWallReady) return;
     const timer = window.setTimeout(() => {
-      const urls = [
+      enqueuePreload([
         ASSETS.computer1.remote,
         ASSETS.computer2.remote,
         ASSETS.careLogWall.remote,
+        ASSETS.memoryWall.remote,
         ASSETS.restoreClinicWall.remote,
         ASSETS.scanButton.remote,
         ASSETS.chibiCare.remote,
-        ASSETS.chibiEyeBattery.remote,
-        ASSETS.chibiEye.remote,
         ASSETS.scanning.remote,
-        ASSETS.memoryWall.remote,
-        ...MEMORY_CHAPTERS.flatMap((c) => [c.normalRemote, c.selectRemote]),
-      ];
-      urls.forEach((u) => {
-        const img = new Image();
-        img.decoding = 'async';
-        img.src = u;
-      });
-    }, 250);
+      ]);
+    }, 350);
     return () => window.clearTimeout(timer);
-  }, [isWallReady]);
+  }, [isWallReady, enqueuePreload]);
+
+  // Tier 2: Preload Memory Terminal cards or Care Log chibis based on active page
+  useEffect(() => {
+    if (currentPage === 'memory-terminal') {
+      enqueuePreload(
+        MEMORY_CHAPTERS.flatMap((c) => [c.normalRemote, c.selectRemote])
+      );
+    } else if (currentPage === 'care-log' || currentPage === 'restore-clinic') {
+      enqueuePreload([
+        ASSETS.chibiEyeBattery.remote,
+        ASSETS.chibiStarTorn.remote,
+        ASSETS.chibiPlantPatch.remote,
+        ASSETS.chibiPlant.remote,
+        ASSETS.chibiPatch.remote,
+        ASSETS.chibiEye.remote,
+        ASSETS.chibiBattery.remote,
+      ]);
+
+      // Pre-fetch chibi-scan & chibi-scan2 binaries into RAM from Cloudinary when user enters Restore Clinic
+      if (currentPage === 'restore-clinic' && !chibiScanBlobRef.current) {
+        (async () => {
+          try {
+            const res = await fetch(ASSETS.chibiScan.remote);
+            if (res.ok && !chibiScanBlobRef.current) {
+              const buf = await res.arrayBuffer();
+              chibiScanBlobRef.current = new Blob([buf], { type: 'image/webp' });
+            }
+          } catch {
+            // Fallback to direct URL if fetch fails
+          }
+        })();
+      }
+      if (currentPage === 'restore-clinic' && !chibiScan2BlobRef.current) {
+        (async () => {
+          try {
+            const res = await fetch(ASSETS.chibiScan2.remote);
+            if (res.ok && !chibiScan2BlobRef.current) {
+              const buf = await res.arrayBuffer();
+              chibiScan2BlobRef.current = new Blob([buf], { type: 'image/webp' });
+            }
+          } catch {
+            // Fallback to direct URL if fetch fails
+          }
+        })();
+      }
+    }
+  }, [currentPage, enqueuePreload]);
 
   // Sync browser Back button / mobile edge-swipe with sub-page state (keeping /glitchtopia slug)
   useEffect(() => {
@@ -543,7 +1720,8 @@ export default function App() {
       const targetPage: GlitchtopiaPage =
         statePage === 'memory-terminal' ||
         statePage === 'care-log' ||
-        statePage === 'restore-clinic'
+        statePage === 'restore-clinic' ||
+        statePage === 'defense-intercept'
           ? statePage
           : 'hub';
       setClinicScanPhase('idle');
@@ -556,6 +1734,26 @@ export default function App() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const openDefenseIntercept = useCallback(() => {
+    sound.playSelect();
+    setHoveredChapter(null);
+    setTappedChapter(null);
+    setChosenChapter(null);
+    setCurrentPage('defense-intercept');
+
+    try {
+      const targetUrl =
+        GLITCHTOPIA_SLUG + window.location.search + window.location.hash;
+      window.history.pushState(
+        { eventSlug: 'glitchtopia', glitchtopiaPage: 'defense-intercept' },
+        '',
+        targetUrl
+      );
+    } catch {
+      // Ignore history pushState errors in sandboxed environments
+    }
   }, []);
 
   const openMemoryTerminal = useCallback(() => {
@@ -598,13 +1796,23 @@ export default function App() {
     }
   }, []);
 
-  const openRestoreClinic = useCallback((logId?: number) => {
+  const openRestoreClinic = useCallback((logId: number) => {
     sound.playSelect();
-    if (typeof logId === 'number') {
-      setSelectedCareLog(logId);
-    }
+    clearClinicHappyTimers();
+    setSelectedCareLog(logId);
     setClinicScanPhase('idle');
     setClinicDialogueStep(0);
+    setFirstChoiceIndex(0);
+    setBatteryChoiceIndex(0);
+    setBatteryDialogueIdx(0);
+    setIsChibiScanReady(false);
+    setIsBatteryPreRevealed(false);
+    setChibiScanPlaySrc(null);
+    setIsChibiScan2Ready(false);
+    setIsIdlePreRevealed(false);
+    setChibiScan2PlaySrc(null);
+    setClinicHappyPlaySrc(null);
+    setIsClinicIdleMasked(false);
     setHoveredCareLog(null);
     setHoveredChapter(null);
     setTappedChapter(null);
@@ -622,31 +1830,213 @@ export default function App() {
     } catch {
       // Ignore history pushState errors in sandboxed environments
     }
+  }, [clearClinicHappyTimers]);
+
+  const triggerChibiScanStep = useCallback((choiceIdx: 0 | 1 = 0) => {
+    sound.playSuccess();
+    setFirstChoiceIndex(choiceIdx);
+    setIsChibiScanReady(false);
+    setIsBatteryPreRevealed(false);
+    let nextSrc: string;
+    if (chibiScanBlobRef.current) {
+      if (activeChibiScanUrlRef.current) {
+        URL.revokeObjectURL(activeChibiScanUrlRef.current);
+      }
+      nextSrc = URL.createObjectURL(chibiScanBlobRef.current);
+      activeChibiScanUrlRef.current = nextSrc;
+    } else {
+      nextSrc = `${ASSETS.chibiScan.remote}?t=${Date.now()}`;
+    }
+    setChibiScanPlaySrc(nextSrc);
+    setClinicDialogueStep(5);
   }, []);
+
+  const triggerChibiScan2Step = useCallback((choiceIdx: 0 | 1) => {
+    sound.playSuccess();
+    setBatteryChoiceIndex(choiceIdx);
+    setBatteryDialogueIdx(0);
+    setIsChibiScan2Ready(false);
+    setIsIdlePreRevealed(false);
+    let nextSrc: string;
+    if (chibiScan2BlobRef.current) {
+      if (activeChibiScan2UrlRef.current) {
+        URL.revokeObjectURL(activeChibiScan2UrlRef.current);
+      }
+      nextSrc = URL.createObjectURL(chibiScan2BlobRef.current);
+      activeChibiScan2UrlRef.current = nextSrc;
+    } else {
+      nextSrc = `${ASSETS.chibiScan2.remote}?t=${Date.now()}`;
+    }
+    setChibiScan2PlaySrc(nextSrc);
+    setClinicDialogueStep(9);
+  }, []);
+
+  const triggerClinicCompleteStep = useCallback(() => {
+    sound.playSuccess();
+    clearClinicHappyTimers();
+    let nextSrc: string;
+    if (happyBlobRef.current) {
+      if (activeClinicHappyUrlRef.current) {
+        URL.revokeObjectURL(activeClinicHappyUrlRef.current);
+      }
+      nextSrc = URL.createObjectURL(happyBlobRef.current);
+      activeClinicHappyUrlRef.current = nextSrc;
+    } else {
+      nextSrc = `${ASSETS.chibiHappy.remote}?t=${Date.now()}`;
+    }
+    setIsClinicIdleMasked(true);
+    setClinicHappyPlaySrc(nextSrc);
+    setClinicDialogueStep(11);
+  }, [clearClinicHappyTimers]);
+
+  const handleClinicHappyFrameZeroReady = useCallback(() => {
+    setIsClinicIdleMasked(true);
+    clearClinicHappyTimers();
+
+    // 1 full chibi-happy cycle is 30 frames * 65ms = 1950ms:
+    // At 1885ms: reveal chibi-idle underneath at opacity 1 before unmounting chibi-happy
+    clinicRevealIdleTimerRef.current = window.setTimeout(() => {
+      setIsClinicIdleMasked(false);
+      clinicRevealIdleTimerRef.current = null;
+    }, 1885);
+
+    // At 1940ms: unmount chibi-happy layer cleanly
+    clinicHideHappyTimerRef.current = window.setTimeout(() => {
+      setClinicHappyPlaySrc(null);
+      clinicHideHappyTimerRef.current = null;
+    }, 1940);
+  }, [clearClinicHappyTimers]);
+
+  const activeDialogueComboKey: 'choice0_0' | 'choice0_1' | 'choice1_0' | 'choice1_1' =
+    firstChoiceIndex === 0
+      ? batteryChoiceIndex === 0
+        ? 'choice0_0'
+        : 'choice0_1'
+      : batteryChoiceIndex === 0
+        ? 'choice1_0'
+        : 'choice1_1';
+
+  const activeClinicDialogueList =
+    activeStep2Config.postCompleteDialogue[activeDialogueComboKey];
+
+  const activeClinicDialogueLine =
+    activeClinicDialogueList[batteryDialogueIdx] ?? activeClinicDialogueList[0];
+
+  const canShowClinicSkip =
+    clinicScanPhase === 'scanning' ||
+    (clinicScanPhase === 'done' &&
+      (clinicDialogueStep === 1 ||
+        clinicDialogueStep === 2 ||
+        clinicDialogueStep === 5 ||
+        clinicDialogueStep === 6 ||
+        clinicDialogueStep === 9 ||
+        clinicDialogueStep === 10 ||
+        clinicDialogueStep === 11 ||
+        (clinicDialogueStep === 12 &&
+          batteryDialogueIdx < activeClinicDialogueList.length - 1)));
+
+  const handleClinicSkip = useCallback(() => {
+    if (clinicScanPhase === 'scanning') {
+      sound.playSelect();
+      setClinicScanPhase('done');
+      setClinicDialogueStep(1);
+      return;
+    }
+
+    if (clinicScanPhase !== 'done') return;
+
+    if (
+      clinicDialogueStep === 1 ||
+      clinicDialogueStep === 2 ||
+      clinicDialogueStep === 3
+    ) {
+      sound.playSelect();
+      setClinicDialogueStep(4);
+    } else if (clinicDialogueStep === 5) {
+      sound.playSelect();
+      setIsChibiScanReady(false);
+      setIsBatteryPreRevealed(false);
+      setChibiScanPlaySrc(null);
+      if (activeChibiScanUrlRef.current) {
+        URL.revokeObjectURL(activeChibiScanUrlRef.current);
+        activeChibiScanUrlRef.current = null;
+      }
+      setClinicDialogueStep(6);
+    } else if (clinicDialogueStep === 6 || clinicDialogueStep === 7) {
+      sound.playSelect();
+      setClinicDialogueStep(8);
+    } else if (clinicDialogueStep === 9) {
+      sound.playSelect();
+      setIsChibiScan2Ready(false);
+      setIsIdlePreRevealed(false);
+      setChibiScan2PlaySrc(null);
+      if (activeChibiScan2UrlRef.current) {
+        URL.revokeObjectURL(activeChibiScan2UrlRef.current);
+        activeChibiScan2UrlRef.current = null;
+      }
+      setBatteryDialogueIdx(0);
+      setClinicDialogueStep(10);
+    } else if (clinicDialogueStep === 10 || clinicDialogueStep === 11) {
+      sound.playSelect();
+      clearClinicHappyTimers();
+      setClinicHappyPlaySrc(null);
+      if (activeClinicHappyUrlRef.current) {
+        URL.revokeObjectURL(activeClinicHappyUrlRef.current);
+        activeClinicHappyUrlRef.current = null;
+      }
+      setIsClinicIdleMasked(false);
+      setBatteryDialogueIdx(0);
+      setClinicDialogueStep(12);
+    } else if (clinicDialogueStep === 12) {
+      const lastIdx = Math.max(0, activeClinicDialogueList.length - 1);
+      if (batteryDialogueIdx < lastIdx) {
+        sound.playSelect();
+        setBatteryDialogueIdx(lastIdx);
+      }
+    }
+  }, [
+    clinicScanPhase,
+    clinicDialogueStep,
+    batteryDialogueIdx,
+    activeClinicDialogueList.length,
+    clearClinicHappyTimers,
+  ]);
 
   const backToHub = useCallback(() => {
     sound.playSelect();
+    clearClinicHappyTimers();
     setClinicScanPhase('idle');
     setClinicDialogueStep(0);
+    setBatteryChoiceIndex(0);
+    setBatteryDialogueIdx(0);
+    setIsChibiScanReady(false);
+    setIsBatteryPreRevealed(false);
+    setChibiScanPlaySrc(null);
+    setIsChibiScan2Ready(false);
+    setIsIdlePreRevealed(false);
+    setChibiScan2PlaySrc(null);
+    setClinicHappyPlaySrc(null);
+    setIsClinicIdleMasked(false);
     setHoveredChapter(null);
     setTappedChapter(null);
     setChosenChapter(null);
 
-    try {
-      const statePage = window.history.state?.glitchtopiaPage;
-      if (
-        statePage === 'memory-terminal' ||
-        statePage === 'care-log' ||
-        statePage === 'restore-clinic'
-      ) {
-        window.history.back();
-        return;
+    setCurrentPage((prev) => {
+      const nextPage: GlitchtopiaPage = prev === 'restore-clinic' ? 'care-log' : 'hub';
+      try {
+        const targetUrl =
+          GLITCHTOPIA_SLUG + window.location.search + window.location.hash;
+        window.history.replaceState(
+          { eventSlug: 'glitchtopia', glitchtopiaPage: nextPage },
+          '',
+          targetUrl
+        );
+      } catch {
+        // Ignore history errors in restricted environments
       }
-    } catch {
-      // Fallback to direct state update
-    }
-    setCurrentPage((prev) => (prev === 'restore-clinic' ? 'care-log' : 'hub'));
-  }, []);
+      return nextPage;
+    });
+  }, [clearClinicHappyTimers]);
 
   const handleChapterClick = (chapterNum: number) => {
     const isDesktop =
@@ -901,6 +2291,83 @@ export default function App() {
                 </svg>
               </button>
 
+              {/* Floating Spherical Drone Robot & 3 Holographic Ambient Bubbles */}
+              <div className="glitchtopia-floating-robot-wrap" aria-hidden="false">
+                {/* 3 Persistent Translucent Glass Bubbles around the robot (hidden while bursting) */}
+                <span
+                  className={`ambient-bubble ambient-bubble-1 ${
+                    isRobotBursting ? 'is-bursting-hidden' : 'is-bursting-visible'
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span className="bubble-highlight-top" />
+                  <span className="bubble-highlight-bot" />
+                </span>
+
+                <span
+                  className={`ambient-bubble ambient-bubble-2 ${
+                    isRobotBursting ? 'is-bursting-hidden' : 'is-bursting-visible'
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span className="bubble-highlight-top" />
+                  <span className="bubble-highlight-bot" />
+                </span>
+
+                <span
+                  className={`ambient-bubble ambient-bubble-3 ${
+                    isRobotBursting ? 'is-bursting-hidden' : 'is-bursting-visible'
+                  }`}
+                  aria-hidden="true"
+                >
+                  <span className="bubble-highlight-top" />
+                  <span className="bubble-highlight-bot" />
+                </span>
+
+                {/* Multiple Small Bubbles Bursting out from the robot (matching reference image) */}
+                {isRobotBursting && (
+                  <div key={robotBurstKey} className="robot-burst-layer" aria-hidden="true">
+                    {ROBOT_BURST_BUBBLES.map((b) => (
+                      <span
+                        key={b.id}
+                        className="robot-burst-bubble"
+                        style={
+                          {
+                            width: `${b.size}px`,
+                            height: `${b.size}px`,
+                            '--target-x': `${b.dx}px`,
+                            '--target-y': `${b.dy}px`,
+                            '--anim-delay': `${b.delay}ms`,
+                            '--anim-dur': `${b.dur}s`,
+                          } as React.CSSProperties
+                        }
+                      >
+                        <span className="bubble-highlight-top" />
+                        <span className="bubble-highlight-bot" />
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Spherical Robot Drone (Interactive button) */}
+                <button
+                  type="button"
+                  aria-label="Touch Floating Drone Robot"
+                  onClick={handleRobotClick}
+                  className="glitchtopia-robot-drone"
+                >
+                  <AssetImg
+                    remoteSrc={ASSETS.robot.remote}
+                    rawRemoteSrc={ASSETS.robot.rawRemote}
+                    localSrc={ASSETS.robot.local}
+                    alt="Floating Spherical Drone Robot"
+                    className="glitchtopia-robot-drone-img"
+                  />
+                  {/* Subtle inner eye glow effect */}
+                  <span className="robot-eye-glow" aria-hidden="true" />
+                </button>
+              </div>
+
               {/* Right Shelf Interactive Hologram Computer Monitor (Cycles Skin 0 -> Skin 1 -> Skin 2 -> Skin 0) */}
               <div className="glitchtopia-computer-wrap">
                 {COMPUTER_SKINS.map((skin, idx) => (
@@ -934,10 +2401,10 @@ export default function App() {
                   <img
                     key={happyPlayKey}
                     src={happyPlaySrc}
-                    alt="Xavier Chibi Happy"
+                    alt={`Xavier Chibi ${activeReactionPose}`}
                     draggable={false}
                     onLoad={handleHappyFrameZeroReady}
-                    className="glitchtopia-chibi-img is-happy is-visible"
+                    className={`glitchtopia-chibi-img is-${activeReactionPose} is-visible`}
                   />
                 )}
                 {/* Tight Silhouette Hitbox hugging only the Chibi's actual head, hair, torso, and boots */}
@@ -952,7 +2419,9 @@ export default function App() {
               {/* In-Game Speech Bubble matching reference screenshot */}
               {showSpeechBubble && (
                 <div
-                  className={`chibi-speech-bubble ${speechSource === 'plant' ? 'is-plant-quote' : ''}`}
+                  className={`chibi-speech-bubble ${
+                    speechSource !== 'chibi' ? 'is-plant-quote' : ''
+                  }`}
                   role="status"
                   aria-live="polite"
                 >
@@ -1023,6 +2492,16 @@ export default function App() {
                       <>
                         <span>It&apos;ll never struggle to find</span>
                         <span>two matching leaves.</span>
+                      </>
+                    ) : speechSource === 'computer' ? (
+                      <>
+                        <span>The documentary was good</span>
+                        <span>until the paywall.</span>
+                      </>
+                    ) : speechSource === 'robot' ? (
+                      <>
+                        <span>What if stars are bubbles</span>
+                        <span>higher beings blow?</span>
                       </>
                     ) : (
                       <>
@@ -1119,7 +2598,7 @@ export default function App() {
                 type="button"
                 aria-label="Restore Clinic"
                 onMouseEnter={() => sound.playHover()}
-                onClick={() => openRestoreClinic()}
+                onClick={() => sound.playSelect()}
                 className="glitchtopia-btn glitchtopia-btn-restore"
               >
                 <AssetImg
@@ -1135,7 +2614,7 @@ export default function App() {
                 type="button"
                 aria-label="Defense Intercept"
                 onMouseEnter={() => sound.playHover()}
-                onClick={() => sound.playSelect()}
+                onClick={openDefenseIntercept}
                 className="glitchtopia-btn glitchtopia-btn-defense"
               >
                 <AssetImg
@@ -1441,12 +2920,22 @@ export default function App() {
                       }}
                       onClick={(e) => {
                         e.stopPropagation();
-                        openRestoreClinic(box.id);
+                        if (box.id >= 1 && box.id <= 5) {
+                          openRestoreClinic(box.id);
+                        } else {
+                          sound.playSelect();
+                          setSelectedCareLog(box.id);
+                        }
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          openRestoreClinic(box.id);
+                          if (box.id >= 1 && box.id <= 5) {
+                            openRestoreClinic(box.id);
+                          } else {
+                            sound.playSelect();
+                            setSelectedCareLog(box.id);
+                          }
                         }
                       }}
                     >
@@ -1617,7 +3106,7 @@ export default function App() {
                   viewBox="0 0 28 28"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-7 h-7"
+                  className="w-5 h-5"
                 >
                   <path
                     d="M18.5 5L14.2 9.3M11.6 11.9L9.5 14L18.5 23"
@@ -1632,7 +3121,10 @@ export default function App() {
           </div>
         )}
 
-        {currentPage === 'restore-clinic' && (
+        {currentPage === 'restore-clinic' &&
+          selectedCareLog !== null &&
+          selectedCareLog >= 1 &&
+          selectedCareLog <= 5 && (
           <div
             className="glitchtopia-stage is-ready"
             onClick={() => {
@@ -1642,6 +3134,23 @@ export default function App() {
               } else if (clinicDialogueStep === 2) {
                 sound.playSelect();
                 setClinicDialogueStep(3);
+              } else if (clinicDialogueStep === 6) {
+                sound.playSelect();
+                setClinicDialogueStep(7);
+              } else if (clinicDialogueStep === 10) {
+                triggerClinicCompleteStep();
+              } else if (clinicDialogueStep === 11) {
+                sound.playSelect();
+                clearClinicHappyTimers();
+                setClinicHappyPlaySrc(null);
+                setIsClinicIdleMasked(false);
+                setBatteryDialogueIdx(0);
+                setClinicDialogueStep(12);
+              } else if (clinicDialogueStep === 12) {
+                if (batteryDialogueIdx < activeClinicDialogueList.length - 1) {
+                  sound.playSelect();
+                  setBatteryDialogueIdx((i) => i + 1);
+                }
               }
             }}
           >
@@ -1653,62 +3162,469 @@ export default function App() {
                 localSrc={ASSETS.restoreClinicWall.local}
                 alt="Restore Clinic Background"
                 className={`glitchtopia-scene-wall is-restore-clinic-wall ${
-                  clinicDialogueStep === 4 ? 'is-focus-dimmed' : ''
+                  clinicScanPhase !== 'idle' ? 'is-scan-dimmed' : ''
+                } ${
+                  (clinicDialogueStep >= 4 && clinicDialogueStep <= 6) ||
+                  (clinicDialogueStep >= 8 && clinicDialogueStep <= 10)
+                    ? 'is-focus-dimmed'
+                    : ''
                 }`}
               />
 
-              {/* Restore Clinic Chibi Character: multi-layer (chibi-care -> chibi1-eyebattery -> zoomed chibi1-eye on Start) */}
-              <AssetImg
-                remoteSrc={ASSETS.chibiCare.remote}
-                rawRemoteSrc={ASSETS.chibiCare.rawRemote}
-                localSrc={ASSETS.chibiCare.local}
-                alt="Xavier Chibi Restore Clinic"
-                className={`restore-clinic-chibi-img ${
-                  clinicScanPhase === 'done' ? 'is-hidden' : 'is-visible'
-                }`}
-              />
-              <AssetImg
-                remoteSrc={ASSETS.chibiEyeBattery.remote}
-                rawRemoteSrc={ASSETS.chibiEyeBattery.rawRemote}
-                localSrc={ASSETS.chibiEyeBattery.local}
-                alt="Xavier Chibi Eye Battery"
-                className={`restore-clinic-chibi-img ${
-                  clinicScanPhase === 'done' && clinicDialogueStep < 4
-                    ? 'is-visible'
-                    : 'is-hidden'
-                }`}
-              />
-              <AssetImg
-                remoteSrc={ASSETS.chibiEye.remote}
-                rawRemoteSrc={ASSETS.chibiEye.rawRemote}
-                localSrc={ASSETS.chibiEye.local}
-                alt="Xavier Chibi Eye Close-up"
-                className={`restore-clinic-chibi-img is-zoomed-eye ${
-                  clinicScanPhase === 'done' && clinicDialogueStep === 4
-                    ? 'is-visible'
-                    : 'is-hidden'
-                }`}
-              />
-
-              {/* Scanning Laser Beam Overlay (sweeps from top of head down to hand, then disappears and swaps chibi) */}
-              {clinicScanPhase === 'scanning' && (
+              {/* Restore Clinic Chibi Character: only mounts layers needed for the active selectedCareLog */}
+              {clinicDialogueStep < 2 && (
                 <AssetImg
-                  remoteSrc={ASSETS.scanning.remote}
-                  rawRemoteSrc={ASSETS.scanning.rawRemote}
-                  localSrc={ASSETS.scanning.local}
-                  alt="Scanning..."
-                  onAnimationEnd={() => {
-                    setClinicScanPhase('done');
-                    setClinicDialogueStep(1);
+                  remoteSrc={ASSETS.chibiCare.remote}
+                  rawRemoteSrc={ASSETS.chibiCare.rawRemote}
+                  localSrc={ASSETS.chibiCare.local}
+                  alt="Xavier Chibi Restore Clinic"
+                  className={`restore-clinic-chibi-img ${
+                    clinicScanPhase === 'done' ? 'is-hidden' : 'is-visible'
+                  }`}
+                />
+              )}
+              {(selectedCareLog === 1 || selectedCareLog === 4) && clinicDialogueStep < 5 && (
+                <AssetImg
+                  remoteSrc={ASSETS.chibiEyeBattery.remote}
+                  rawRemoteSrc={ASSETS.chibiEyeBattery.rawRemote}
+                  localSrc={ASSETS.chibiEyeBattery.local}
+                  alt="Xavier Chibi Eye Battery"
+                  className={`restore-clinic-chibi-img ${
+                    clinicScanPhase === 'done' && clinicDialogueStep < 4
+                      ? 'is-visible'
+                      : 'is-hidden'
+                  }`}
+                />
+              )}
+              {selectedCareLog === 2 && clinicDialogueStep <= 9 && (
+                <AssetImg
+                  remoteSrc={ASSETS.chibiStarTorn.remote}
+                  rawRemoteSrc={ASSETS.chibiStarTorn.rawRemote}
+                  localSrc={ASSETS.chibiStarTorn.local}
+                  alt="Xavier Chibi Star Torn"
+                  decoding="sync"
+                  className={`restore-clinic-chibi-img ${
+                    clinicDialogueStep >= 4 && clinicDialogueStep !== 7
+                      ? 'is-zoomed-startorn'
+                      : 'is-startorn'
+                  } ${
+                    clinicScanPhase === 'done' &&
+                    (clinicDialogueStep < 4 ||
+                      clinicDialogueStep === 4 ||
+                      (clinicDialogueStep === 5 && (!isChibiScanReady || isBatteryPreRevealed)) ||
+                      clinicDialogueStep === 6 ||
+                      clinicDialogueStep === 7 ||
+                      clinicDialogueStep === 8 ||
+                      (clinicDialogueStep === 9 && !isChibiScan2Ready))
+                      ? 'is-visible'
+                      : 'is-hidden'
+                  }`}
+                />
+              )}
+              {(selectedCareLog === 3 || selectedCareLog === 5) && clinicDialogueStep < 5 && (
+                <AssetImg
+                  remoteSrc={ASSETS.chibiPlantPatch.remote}
+                  rawRemoteSrc={ASSETS.chibiPlantPatch.rawRemote}
+                  localSrc={ASSETS.chibiPlantPatch.local}
+                  alt="Xavier Chibi Plant Patch"
+                  decoding="sync"
+                  className={`restore-clinic-chibi-img is-plantpatch ${
+                    clinicScanPhase === 'done' && clinicDialogueStep < 4
+                      ? 'is-visible'
+                      : 'is-hidden'
+                  }`}
+                />
+              )}
+              {(selectedCareLog === 3 || selectedCareLog === 5) &&
+                clinicScanPhase === 'done' &&
+                clinicDialogueStep >= 3 &&
+                clinicDialogueStep <= 5 && (
+                  <AssetImg
+                    remoteSrc={ASSETS.chibiPlant.remote}
+                    rawRemoteSrc={ASSETS.chibiPlant.rawRemote}
+                    localSrc={ASSETS.chibiPlant.local}
+                    alt="Xavier Chibi Plant Close-up"
+                    decoding="sync"
+                    className={`restore-clinic-chibi-img is-zoomed-plantpatch ${
+                      clinicDialogueStep === 4 || (clinicDialogueStep === 5 && !isChibiScanReady)
+                        ? 'is-visible'
+                        : 'is-hidden'
+                    }`}
+                  />
+                )}
+              {(selectedCareLog === 3 || selectedCareLog === 5) &&
+                clinicScanPhase === 'done' &&
+                clinicDialogueStep >= 5 &&
+                clinicDialogueStep <= 9 && (
+                  <AssetImg
+                    remoteSrc={ASSETS.chibiPatch.remote}
+                    rawRemoteSrc={ASSETS.chibiPatch.rawRemote}
+                    localSrc={ASSETS.chibiPatch.local}
+                    alt="Xavier Chibi Patch"
+                    decoding="sync"
+                    className={`restore-clinic-chibi-img ${
+                      clinicDialogueStep !== 7 ? 'is-zoomed-plantpatch' : 'is-plantpatch'
+                    } ${
+                      (clinicDialogueStep === 5 && isBatteryPreRevealed) ||
+                      clinicDialogueStep === 6 ||
+                      clinicDialogueStep === 7 ||
+                      clinicDialogueStep === 8 ||
+                      (clinicDialogueStep === 9 && !isChibiScan2Ready)
+                        ? 'is-visible'
+                        : 'is-hidden'
+                    }`}
+                  />
+                )}
+              {(selectedCareLog === 1 || selectedCareLog === 4) &&
+                clinicScanPhase === 'done' &&
+                clinicDialogueStep >= 3 &&
+                clinicDialogueStep <= 5 && (
+                  <AssetImg
+                    remoteSrc={ASSETS.chibiEye.remote}
+                    rawRemoteSrc={ASSETS.chibiEye.rawRemote}
+                    localSrc={ASSETS.chibiEye.local}
+                    alt="Xavier Chibi Eye Close-up"
+                    decoding="sync"
+                    className={`restore-clinic-chibi-img is-zoomed-eye ${
+                      clinicDialogueStep === 4 || (clinicDialogueStep === 5 && !isChibiScanReady)
+                        ? 'is-visible'
+                        : 'is-hidden'
+                    }`}
+                  />
+                )}
+              {(selectedCareLog === 1 || selectedCareLog === 4) &&
+                clinicScanPhase === 'done' &&
+                clinicDialogueStep >= 5 &&
+                clinicDialogueStep <= 9 && (
+                  <AssetImg
+                    remoteSrc={ASSETS.chibiBattery.remote}
+                    rawRemoteSrc={ASSETS.chibiBattery.rawRemote}
+                    localSrc={ASSETS.chibiBattery.local}
+                    alt="Xavier Chibi Battery"
+                    decoding="sync"
+                    className={`restore-clinic-chibi-img ${
+                      clinicDialogueStep !== 7 ? 'is-zoomed-eye' : ''
+                    } ${
+                      (clinicDialogueStep === 5 && isBatteryPreRevealed) ||
+                      clinicDialogueStep === 6 ||
+                      clinicDialogueStep === 7 ||
+                      clinicDialogueStep === 8 ||
+                      (clinicDialogueStep === 9 && !isChibiScan2Ready)
+                        ? 'is-visible'
+                        : 'is-hidden'
+                    }`}
+                  />
+                )}
+              {clinicScanPhase === 'done' && clinicDialogueStep >= 9 && (
+                <AssetImg
+                  remoteSrc={ASSETS.chibiIdle.remote}
+                  rawRemoteSrc={ASSETS.chibiIdle.rawRemote}
+                  localSrc={ASSETS.chibiIdle.local}
+                  alt="Xavier Chibi Idle"
+                  decoding="sync"
+                  className={`restore-clinic-chibi-img ${
+                    clinicDialogueStep >= 11 ? 'is-normal-idle' : 'is-zoomed-idle'
+                  } ${
+                    (clinicDialogueStep === 9 && isIdlePreRevealed) ||
+                    clinicDialogueStep === 10 ||
+                    (clinicDialogueStep === 11 && !isClinicIdleMasked) ||
+                    clinicDialogueStep === 12
+                      ? 'is-visible'
+                      : 'is-hidden'
+                  }`}
+                />
+              )}
+              {clinicScanPhase === 'done' &&
+                clinicDialogueStep === 11 &&
+                clinicHappyPlaySrc && (
+                  <img
+                    src={clinicHappyPlaySrc}
+                    alt="Xavier Chibi Happy Complete"
+                    decoding="sync"
+                    draggable={false}
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      if (typeof img.decode === 'function') {
+                        img
+                          .decode()
+                          .then(handleClinicHappyFrameZeroReady)
+                          .catch(handleClinicHappyFrameZeroReady);
+                      } else {
+                        handleClinicHappyFrameZeroReady();
+                      }
+                    }}
+                    onError={() => {
+                      if (clinicHappyPlaySrc !== ASSETS.chibiHappy.remote) {
+                        setClinicHappyPlaySrc(ASSETS.chibiHappy.remote);
+                      } else {
+                        handleClinicHappyFrameZeroReady();
+                      }
+                    }}
+                    className="restore-clinic-chibi-img is-normal-happy is-visible"
+                  />
+                )}
+              {clinicScanPhase === 'done' && clinicDialogueStep === 5 && chibiScanPlaySrc && (
+                <img
+                  src={chibiScanPlaySrc}
+                  alt="Xavier Chibi Scan Repair"
+                  decoding="sync"
+                  draggable={false}
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    const markReady = () => {
+                      window.requestAnimationFrame(() => setIsChibiScanReady(true));
+                    };
+                    if (typeof img.decode === 'function') {
+                      img.decode().then(markReady).catch(markReady);
+                    } else {
+                      markReady();
+                    }
                   }}
-                  className="restore-clinic-scanning-beam"
+                  onError={() => {
+                    if (chibiScanPlaySrc !== ASSETS.chibiScan.remote) {
+                      setChibiScanPlaySrc(ASSETS.chibiScan.remote);
+                    } else {
+                      setIsChibiScanReady(true);
+                    }
+                  }}
+                  className={`restore-clinic-chibi-img is-zoomed-scan ${
+                    clinicDialogueStep === 5 && isChibiScanReady ? 'is-visible' : 'is-hidden'
+                  }`}
+                />
+              )}
+              {clinicScanPhase === 'done' && clinicDialogueStep === 9 && chibiScan2PlaySrc && (
+                <img
+                  src={chibiScan2PlaySrc}
+                  alt="Xavier Chibi Scan Heart"
+                  decoding="sync"
+                  draggable={false}
+                  onLoad={(e) => {
+                    const img = e.currentTarget;
+                    const markReady = () => {
+                      window.requestAnimationFrame(() => setIsChibiScan2Ready(true));
+                    };
+                    if (typeof img.decode === 'function') {
+                      img.decode().then(markReady).catch(markReady);
+                    } else {
+                      markReady();
+                    }
+                  }}
+                  onError={() => {
+                    if (chibiScan2PlaySrc !== ASSETS.chibiScan2.remote) {
+                      setChibiScan2PlaySrc(ASSETS.chibiScan2.remote);
+                    } else {
+                      setIsChibiScan2Ready(true);
+                    }
+                  }}
+                  className={`restore-clinic-chibi-img is-zoomed-scan2 ${
+                    clinicDialogueStep === 9 && isChibiScan2Ready ? 'is-visible' : 'is-hidden'
+                  }`}
                 />
               )}
 
-              {/* Step 1: Persistent Top Speech Bubble after switching to chibi1-eyebattery */}
-              {clinicDialogueStep === 1 && (
+              {/* Scanning Laser Beam Overlay with Cyberpunk Glitch, Hologram Trail & HUD Telemetry */}
+              {clinicScanPhase === 'scanning' && (
                 <div
-                  className="chibi-speech-bubble is-clinic-quote"
+                  className="restore-clinic-scanning-beam"
+                  onAnimationEnd={(e) => {
+                    if (e.animationName === 'restore-clinic-scan-sweep') {
+                      setClinicScanPhase('done');
+                      setClinicDialogueStep(1);
+                    }
+                  }}
+                >
+                  {/* Trailing Digital Grid & Scanline Light Curtain above beam */}
+                  <div className="scan-cyber-trail" aria-hidden="true" />
+
+                  {/* Intense Neon Laser Horizon Line */}
+                  <div className="scan-cyber-laser-line" aria-hidden="true" />
+
+                  {/* Chromatic Aberration Glitch Ghost Layers (Cyan & Magenta) */}
+                  <AssetImg
+                    remoteSrc={ASSETS.scanning.remote}
+                    rawRemoteSrc={ASSETS.scanning.rawRemote}
+                    localSrc={ASSETS.scanning.local}
+                    alt=""
+                    aria-hidden="true"
+                    className="scan-cyber-img scan-cyber-ghost-cyan"
+                  />
+                  <AssetImg
+                    remoteSrc={ASSETS.scanning.remote}
+                    rawRemoteSrc={ASSETS.scanning.rawRemote}
+                    localSrc={ASSETS.scanning.local}
+                    alt=""
+                    aria-hidden="true"
+                    className="scan-cyber-img scan-cyber-ghost-magenta"
+                  />
+
+                  {/* Main Scanning Beam Image with Neon Pulse */}
+                  <AssetImg
+                    remoteSrc={ASSETS.scanning.remote}
+                    rawRemoteSrc={ASSETS.scanning.rawRemote}
+                    localSrc={ASSETS.scanning.local}
+                    alt="Scanning..."
+                    className="scan-cyber-img scan-cyber-main"
+                  />
+
+                  {/* Left & Right Cyberpunk HUD Reticles, Glitch Streaks & Floating Data Pixels */}
+                  <span className="scan-cyber-bracket scan-cyber-bracket-left" aria-hidden="true" />
+                  <span className="scan-cyber-bracket scan-cyber-bracket-right" aria-hidden="true" />
+                  <span className="scan-cyber-tag scan-cyber-tag-left" aria-hidden="true">
+                    SYS.SCAN // 0x9F
+                  </span>
+                  <span className="scan-cyber-tag scan-cyber-tag-right" aria-hidden="true">
+                    BIO-SYNC
+                  </span>
+                  <span className="scan-cyber-spark scan-cyber-spark-1" aria-hidden="true" />
+                  <span className="scan-cyber-spark scan-cyber-spark-2" aria-hidden="true" />
+                  <span className="scan-cyber-spark scan-cyber-spark-3" aria-hidden="true" />
+                  <span className="scan-cyber-spark scan-cyber-spark-4" aria-hidden="true" />
+                </div>
+              )}
+
+              {/* Step 11: Top-Center Holographic "+ Complete! +" Banner matching image_67df016a.png */}
+              {clinicDialogueStep === 11 && (
+                <div className="restore-clinic-complete-banner" aria-hidden="true">
+                  <svg
+                    viewBox="0 0 760 150"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="restore-clinic-complete-svg"
+                  >
+                    <defs>
+                      <linearGradient id="completeBandGrad" x1="0" y1="0.5" x2="1" y2="0.5">
+                        <stop offset="0%" stopColor="#1e4b8f" stopOpacity="0" />
+                        <stop offset="18%" stopColor="#2664b8" stopOpacity="0.45" />
+                        <stop offset="50%" stopColor="#388ce0" stopOpacity="0.72" />
+                        <stop offset="82%" stopColor="#2664b8" stopOpacity="0.45" />
+                        <stop offset="100%" stopColor="#1e4b8f" stopOpacity="0" />
+                      </linearGradient>
+                      <linearGradient id="completeEdgeLineGrad" x1="0" y1="0.5" x2="1" y2="0.5">
+                        <stop offset="0%" stopColor="#7ceeff" stopOpacity="0" />
+                        <stop offset="22%" stopColor="#7ceeff" stopOpacity="0.55" />
+                        <stop offset="50%" stopColor="#d8fcff" stopOpacity="0.92" />
+                        <stop offset="78%" stopColor="#7ceeff" stopOpacity="0.55" />
+                        <stop offset="100%" stopColor="#7ceeff" stopOpacity="0" />
+                      </linearGradient>
+                      <linearGradient id="completeTextGrad" x1="0" y1="0" x2="1" y2="0.2">
+                        <stop offset="0%" stopColor="#fff7d6" />
+                        <stop offset="35%" stopColor="#f3f9e8" />
+                        <stop offset="70%" stopColor="#d9f7ff" />
+                        <stop offset="100%" stopColor="#8cecff" />
+                      </linearGradient>
+                      <filter
+                        id="completeTextGlow"
+                        x="-25%"
+                        y="-35%"
+                        width="150%"
+                        height="170%"
+                        colorInterpolationFilters="sRGB"
+                      >
+                        <feGaussianBlur stdDeviation="5" result="blur1" />
+                        <feColorMatrix
+                          in="blur1"
+                          type="matrix"
+                          values="0 0 0 0 0.25  0 0 0 0 0.85  0 0 0 0 1  0 0 0 0.85 0"
+                          result="cyanGlow"
+                        />
+                        <feMerge>
+                          <feMergeNode in="cyanGlow" />
+                          <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                      </filter>
+                    </defs>
+
+                    {/* Soft Horizontal Hologram Band */}
+                    <rect x="20" y="36" width="720" height="78" fill="url(#completeBandGrad)" />
+
+                    {/* Top & Bottom Glowing Wave Hairlines */}
+                    <path
+                      d="M 40 36 Q 210 22 380 34 T 720 36"
+                      stroke="url(#completeEdgeLineGrad)"
+                      strokeWidth="1.6"
+                      fill="none"
+                    />
+                    <path
+                      d="M 40 114 Q 210 124 380 114 T 720 114"
+                      stroke="url(#completeEdgeLineGrad)"
+                      strokeWidth="1.8"
+                      fill="none"
+                    />
+
+                    {/* Subtle Center Upward Arrow Silhouette behind text */}
+                    <path
+                      d="M 380 28 L 414 62 H 394 V 108 H 366 V 62 H 346 Z"
+                      fill="#7ceeff"
+                      fillOpacity="0.16"
+                    />
+
+                    {/* Vertical Micro Tech Tick Lines on Left & Right */}
+                    {[168, 180, 192, 568, 580, 592].map((tx, idx) => (
+                      <line
+                        key={tx}
+                        x1={tx}
+                        y1={idx % 2 === 0 ? 22 : 28}
+                        x2={tx}
+                        y2={122}
+                        stroke="#8cecff"
+                        strokeOpacity="0.24"
+                        strokeWidth="1.4"
+                      />
+                    ))}
+
+                    {/* Floating Data Squares */}
+                    <rect x="64" y="64" width="12" height="12" fill="#9bc5ef" fillOpacity="0.35" />
+                    <rect x="298" y="10" width="13" height="13" fill="#e2ecf8" fillOpacity="0.55" />
+
+                    {/* Left Glowing Cyan Medical Cross (+) */}
+                    <g transform="translate(206, 78)" filter="url(#completeTextGlow)">
+                      <rect x="-4.5" y="-14" width="9" height="28" rx="1.5" fill="#7cf3ff" />
+                      <rect x="-14" y="-4.5" width="28" height="9" rx="1.5" fill="#7cf3ff" />
+                    </g>
+
+                    {/* Right Glowing Cyan Medical Cross (+) */}
+                    <g transform="translate(554, 78)" filter="url(#completeTextGlow)">
+                      <rect x="-4.5" y="-14" width="9" height="28" rx="1.5" fill="#7cf3ff" />
+                      <rect x="-14" y="-4.5" width="28" height="9" rx="1.5" fill="#7cf3ff" />
+                    </g>
+
+                    {/* Main "Complete!" Serif Display Title */}
+                    <text
+                      x="380"
+                      y="97"
+                      textAnchor="middle"
+                      fill="url(#completeTextGrad)"
+                      fontFamily="'Playfair Display', 'Georgia', 'Times New Roman', serif"
+                      fontSize="64"
+                      fontWeight="700"
+                      letterSpacing="0.02em"
+                      filter="url(#completeTextGlow)"
+                    >
+                      {FIXED_CLINIC_DIALOGUE.completeBannerText}
+                    </text>
+                  </svg>
+                </div>
+              )}
+
+              {/* Step 1, Step 11 & Step 12 (when speaker === 'X'): Top Blue Speech Bubble above full-body chibi */}
+              {(clinicDialogueStep === 1 ||
+                clinicDialogueStep === 11 ||
+                (clinicDialogueStep === 12 &&
+                  activeClinicDialogueLine?.speaker === 'X')) && (
+                <div
+                  key={
+                    clinicDialogueStep === 12
+                      ? `step12-x-${batteryDialogueIdx}`
+                      : `step-${clinicDialogueStep}`
+                  }
+                  className={`chibi-speech-bubble is-clinic-quote${
+                    clinicDialogueStep === 12 ? ' is-post-complete-quote' : ''
+                  }${
+                    clinicDialogueStep === 12 &&
+                    (activeClinicDialogueLine?.lines.length ?? 0) >= 3
+                      ? ' is-three-lines'
+                      : ''
+                  }`}
                   role="status"
                   aria-live="polite"
                 >
@@ -1769,19 +3685,143 @@ export default function App() {
                       strokeWidth="1.1"
                       strokeLinejoin="round"
                     />
+
+                    {(clinicDialogueStep === 11 || clinicDialogueStep === 12) && (
+                      <polygon points="338,73 347,73 342.5,80" fill="#d8ecff" fillOpacity="0.9" />
+                    )}
                   </svg>
 
-                  <div className="chibi-speech-text">
-                    <span>System error. I need</span>
-                    <span>some time for repairs.</span>
+                  <div
+                    className={`chibi-speech-text${
+                      clinicDialogueStep === 12 ? ' is-clinic-zoomed-text' : ''
+                    }`}
+                  >
+                    {clinicDialogueStep === 12 ? (
+                      (activeClinicDialogueLine?.lines ?? []).map((line, i) => (
+                        <span key={i}>{line}</span>
+                      ))
+                    ) : clinicDialogueStep === 11 ? (
+                      FIXED_CLINIC_DIALOGUE.completeQuoteLines.map((line, i) => (
+                        <span key={i}>{line}</span>
+                      ))
+                    ) : (
+                      FIXED_CLINIC_DIALOGUE.afterInitialScanX.map((line, i) => (
+                        <span key={i}>{line}</span>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Step 2: Lower-Right Red/Burgundy Caretaker Speech Bubble (without "Lys Stargazer") */}
-              {clinicDialogueStep === 2 && (
+              {/* Step 6 & Step 10: Top Speech Bubble after chibi-scan / chibi-scan2 finishes 1 cycle */}
+              {(clinicDialogueStep === 6 || clinicDialogueStep === 10) && (() => {
+                const zoomedQuoteLines =
+                  clinicDialogueStep === 10
+                    ? batteryChoiceIndex === 0
+                      ? activeStep2Config.afterScanQuotes.choice0
+                      : activeStep2Config.afterScanQuotes.choice1
+                    : firstChoiceIndex === 0
+                      ? activeStep1Config.afterScanQuotes.choice0
+                      : activeStep1Config.afterScanQuotes.choice1;
+                return (
                 <div
-                  className="chibi-speech-bubble is-caretaker-red-quote"
+                  key={`step-zoomed-${clinicDialogueStep}`}
+                  className={`chibi-speech-bubble is-clinic-zoomed-quote${
+                    zoomedQuoteLines.length >= 3 ? ' is-three-lines' : ''
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
+                  <svg
+                    className="chibi-speech-svg"
+                    viewBox="0 0 380 106"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    preserveAspectRatio="none"
+                    aria-hidden="true"
+                  >
+                    <defs>
+                      <linearGradient id="clinicZoomedSpeechFillGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#121e2e" stopOpacity="0.95" />
+                        <stop offset="100%" stopColor="#0c1522" stopOpacity="0.97" />
+                      </linearGradient>
+                      <linearGradient id="clinicZoomedSpeechOuterStroke" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#eef6ff" stopOpacity="0.95" />
+                        <stop offset="45%" stopColor="#9ab6d1" stopOpacity="0.7" />
+                        <stop offset="100%" stopColor="#e2effc" stopOpacity="0.92" />
+                      </linearGradient>
+                      <pattern
+                        id="clinicZoomedSpeechScanlines"
+                        width="4"
+                        height="4"
+                        patternUnits="userSpaceOnUse"
+                      >
+                        <line
+                          x1="0"
+                          y1="0"
+                          x2="4"
+                          y2="0"
+                          stroke="#5899c4"
+                          strokeOpacity="0.1"
+                          strokeWidth="1"
+                        />
+                      </pattern>
+                    </defs>
+
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 334 90 H 54 L 30 102 L 37 87 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#clinicZoomedSpeechFillGrad)"
+                      stroke="url(#clinicZoomedSpeechOuterStroke)"
+                      strokeWidth="2.4"
+                      strokeLinejoin="round"
+                    />
+
+                    <path
+                      d="M 46 6 H 334 A 40 40 0 0 1 374 46 V 50 A 40 40 0 0 1 334 90 H 54 L 30 102 L 37 87 A 40 40 0 0 1 6 50 V 46 A 40 40 0 0 1 46 6 Z"
+                      fill="url(#clinicZoomedSpeechScanlines)"
+                    />
+
+                    <path
+                      d="M 46 9.5 H 334 A 36.5 36.5 0 0 1 370.5 46 V 50 A 36.5 36.5 0 0 1 334 86.5 H 52.5 L 35.5 95.5 L 40.5 84.5 A 36.5 36.5 0 0 1 9.5 50 V 46 A 36.5 36.5 0 0 1 46 9.5 Z"
+                      fill="none"
+                      stroke="#5b7a99"
+                      strokeOpacity="0.45"
+                      strokeWidth="1.1"
+                      strokeLinejoin="round"
+                    />
+
+                    {clinicDialogueStep === 10 && (
+                      <polygon points="338,73 347,73 342.5,80" fill="#d8ecff" fillOpacity="0.9" />
+                    )}
+                  </svg>
+
+                  <div className="chibi-speech-text is-clinic-zoomed-text">
+                    {zoomedQuoteLines.map((line, i) => (
+                      <span key={i}>{line}</span>
+                    ))}
+                  </div>
+                </div>
+                );
+              })()}
+
+              {/* Step 2 & Step 12 (when speaker === 'MC'): Lower-Right Red/Burgundy Caretaker Speech Bubble */}
+              {(clinicDialogueStep === 2 ||
+                (clinicDialogueStep === 12 &&
+                  activeClinicDialogueLine?.speaker === 'MC')) && (
+                <div
+                  key={
+                    clinicDialogueStep === 12
+                      ? `step12-mc-${batteryDialogueIdx}`
+                      : `step-${clinicDialogueStep}`
+                  }
+                  className={`chibi-speech-bubble is-caretaker-red-quote${
+                    clinicDialogueStep === 12 ? ' is-zoomed-caretaker-red-quote' : ''
+                  }${
+                    clinicDialogueStep === 12 &&
+                    (activeClinicDialogueLine?.lines.length ?? 0) >= 3
+                      ? ' is-three-lines'
+                      : ''
+                  }`}
                   role="status"
                   aria-live="polite"
                 >
@@ -1855,14 +3895,21 @@ export default function App() {
                   </svg>
 
                   <div className="chibi-speech-text is-caretaker-red-text">
-                    <span>Then let me switch to</span>
-                    <span>caretaker mode.</span>
+                    {clinicDialogueStep === 12 ? (
+                      (activeClinicDialogueLine?.lines ?? []).map((line, i) => (
+                        <span key={i}>{line}</span>
+                      ))
+                    ) : (
+                      FIXED_CLINIC_DIALOGUE.afterInitialScanMC.map((line, i) => (
+                        <span key={i}>{line}</span>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
 
-              {/* Step 3: Top-Center Blue Holographic Diagnostic Checklist Panel (Hình 1 & Hình 2) */}
-              {clinicDialogueStep === 3 && (
+              {/* Step 3 & Step 7: Top-Center Blue Holographic Diagnostic Checklist Panel */}
+              {(clinicDialogueStep === 3 || clinicDialogueStep === 7) && (
                 <div
                   className="diagnostic-checklist-panel"
                   role="region"
@@ -2087,7 +4134,16 @@ export default function App() {
                     ))}
 
                     {/* Checklist Items (Row 1 & Row 2) */}
-                    {DIAGNOSTIC_CHECKLIST_TEXT.items.map((item, rowIdx) => {
+                    {(selectedCareLog === 5
+                      ? DIAGNOSTIC_CHECKLIST_LOG5_TEXT.items
+                      : selectedCareLog === 4
+                        ? DIAGNOSTIC_CHECKLIST_LOG4_TEXT.items
+                        : selectedCareLog === 3
+                          ? DIAGNOSTIC_CHECKLIST_LOG3_TEXT.items
+                          : selectedCareLog === 2
+                            ? DIAGNOSTIC_CHECKLIST_LOG2_TEXT.items
+                            : DIAGNOSTIC_CHECKLIST_TEXT.items
+                    ).map((item, rowIdx) => {
                       const rowTop = rowIdx === 0 ? 118 : 250;
                       const iconX = 56;
                       const iconY = rowTop + 28;
@@ -2095,9 +4151,10 @@ export default function App() {
                       const firstLineY =
                         item.lines.length > 1 ? rowTop + 60 : rowTop + 75;
                       const lineGap = 31;
+                      const isCompleted = clinicDialogueStep === 7 && rowIdx === 0;
 
                       return (
-                        <g key={item.id}>
+                        <g key={item.id} opacity={isCompleted ? 0.38 : 1}>
                           {/* Left Target Bracket Icon (74x74) */}
                           <g transform={`translate(${iconX}, ${iconY})`}>
                             <path
@@ -2123,6 +4180,30 @@ export default function App() {
                                   fill="none"
                                 />
                               </g>
+                            ) : item.iconType === 'brain' ? (
+                              <g>
+                                {/* White Side-Profile Head Silhouette (facing left) matching image_ee4ddd52.png */}
+                                <path
+                                  d="M 38 14 C 50.5 14, 57.5 22.5, 57.5 33.5 C 57.5 41.5, 53 48.2, 46.8 51.5 L 46.8 55.2 L 50.8 59.5 H 25.5 L 30.2 55.2 V 51.2 L 22.5 51.2 C 20 51.2, 19.2 49.4, 19.8 47.4 L 20.5 45.2 L 19.2 44.2 C 18.5 43.6, 18.9 42.4, 20.2 42 L 20.5 40.4 L 17.2 38.6 C 16.0 37.9, 16.2 36.4, 17.5 35.4 L 20.5 32.8 C 20.2 22.0, 27.5 14, 38 14 Z"
+                                  fill="#ffffff"
+                                />
+                                {/* Cyan-Blue Brain Contour & Cerebral Folds inside the Head */}
+                                <path
+                                  d="M 30.5 23.2 C 30.5 20.4, 34 18.8, 37.2 19.5 C 39.8 18.2, 43.8 18.6, 45.8 20.8 C 49.2 21.2, 51.6 24.0, 51.4 27.4 C 52.8 29.8, 51.8 33.4, 49.2 34.8 C 48.2 37.4, 44.8 38.4, 42.0 37.5 L 40.5 40.5 H 37.2 L 38.0 36.8 C 34.2 36.8, 30.4 35.2, 28.8 32.5 C 26.2 30.8, 26.5 26.2, 29.5 24.6 C 29.6 23.9, 30.0 23.4, 30.5 23.2 Z"
+                                  fill="#256ec2"
+                                  stroke="#174996"
+                                  strokeWidth="1.2"
+                                  strokeLinejoin="round"
+                                />
+                                {/* Inner Bright Cyan Brain Gyri / Sulci Lines */}
+                                <path
+                                  d="M 30.5 27.8 C 33.2 26.2, 36.5 27.2, 38.2 29.2 M 36.2 22.8 C 39.2 22.2, 42.2 23.8, 42.8 26.8 M 43.2 22.5 C 46.2 23.2, 48.4 25.6, 47.6 28.6 M 29.8 31.4 C 33.5 32.2, 37.4 31.8, 41.2 29.6 C 44.2 27.8, 47.5 29.4, 49.2 31.8 M 34.8 34.6 C 38.4 34.8, 42.6 33.8, 45.8 35.2"
+                                  stroke="#9bf4ff"
+                                  strokeWidth="1.55"
+                                  strokeLinecap="round"
+                                  fill="none"
+                                />
+                              </g>
                             ) : (
                               <g>
                                 <path
@@ -2139,7 +4220,7 @@ export default function App() {
                               key={lineIdx}
                               x={textX}
                               y={firstLineY + lineIdx * lineGap}
-                              fill="#f4f9ff"
+                              fill={isCompleted ? '#b8d4f2' : '#f4f9ff'}
                               fontFamily="'Be Vietnam Pro', 'Segoe UI', sans-serif"
                               fontWeight="500"
                               fontSize="23.5"
@@ -2264,33 +4345,6 @@ export default function App() {
                 </div>
               )}
 
-              <button
-                type="button"
-                aria-label={lang === 'VI' ? 'Quay lại' : 'Back'}
-                title={lang === 'VI' ? 'Quay lại' : 'Back'}
-                onMouseEnter={() => sound.playHover()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  backToHub();
-                }}
-                className="memory-terminal-back-btn"
-              >
-                <svg
-                  viewBox="0 0 28 28"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-7 h-7"
-                >
-                  <path
-                    d="M18.5 5L14.2 9.3M11.6 11.9L9.5 14L18.5 23"
-                    stroke="currentColor"
-                    strokeWidth="2.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-
               {/* Bottom-Right Interactive Scan Button (disappears once clicked) */}
               {clinicScanPhase === 'idle' && (
                 <button
@@ -2314,16 +4368,20 @@ export default function App() {
                 </button>
               )}
 
-              {/* Bottom-Center Holographic "Start" Button on the Square Grid (same style as choice buttons) */}
-              {clinicDialogueStep === 3 && (
+              {/* Bottom-Center Holographic "Start" (step 3) / "Continue" (step 7) Button on the Square Grid */}
+              {(clinicDialogueStep === 3 || clinicDialogueStep === 7) && (
                 <button
                   type="button"
-                  aria-label="Start"
+                  aria-label={clinicDialogueStep === 7 ? 'Continue' : 'Start'}
                   onMouseEnter={() => sound.playHover()}
                   onClick={(e) => {
                     e.stopPropagation();
                     sound.playSuccess();
-                    setClinicDialogueStep(4);
+                    if (clinicDialogueStep === 3) {
+                      setClinicDialogueStep(4);
+                    } else if (clinicDialogueStep === 7) {
+                      setClinicDialogueStep(8);
+                    }
                   }}
                   className="restore-clinic-start-btn"
                 >
@@ -2418,26 +4476,37 @@ export default function App() {
                     />
                   </svg>
 
-                  <span className="restore-clinic-start-label">Start</span>
+                  <span className="restore-clinic-start-label">
+                    {clinicDialogueStep === 7 ? 'Continue' : 'Start'}
+                  </span>
                 </button>
               )}
 
-              {/* Step 4: Bottom Grid Narrative Prompt & Two Holographic Choice Buttons */}
-              {clinicDialogueStep === 4 && (
+              {/* Step 4 & Step 8: Bottom Grid Narrative Prompt & Two Holographic Choice Buttons */}
+              {(clinicDialogueStep === 4 || clinicDialogueStep === 8) && (
                 <div className="restore-clinic-choice-panel">
                   <p className="restore-clinic-choice-prompt">
-                    {MAINTENANCE_EYE_STEP_TEXT.prompt}
+                    {clinicDialogueStep === 8
+                      ? activeStep2Config.prompt
+                      : activeStep1Config.prompt}
                   </p>
 
                   <div className="restore-clinic-choice-row">
-                    {MAINTENANCE_EYE_STEP_TEXT.choices.map((choiceLabel, idx) => (
+                    {(clinicDialogueStep === 8
+                      ? activeStep2Config.choices
+                      : activeStep1Config.choices
+                    ).map((choiceLabel, idx) => (
                       <button
                         key={choiceLabel}
                         type="button"
                         onMouseEnter={() => sound.playHover()}
                         onClick={(e) => {
                           e.stopPropagation();
-                          sound.playSelect();
+                          if (clinicDialogueStep === 4) {
+                            triggerChibiScanStep(idx === 1 ? 1 : 0);
+                          } else if (clinicDialogueStep === 8) {
+                            triggerChibiScan2Step(idx === 1 ? 1 : 0);
+                          }
                         }}
                         className="restore-clinic-choice-btn"
                       >
@@ -2549,6 +4618,85 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* Bottom Maintenance Progress Status while scanning is in progress */}
+              {isMaintenanceScanning && (
+                <div
+                  className="restore-clinic-maintenance-status"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <span ref={maintenanceTextRef}>Maintenance in progress 0%</span>
+                </div>
+              )}
+
+              {/* Step 11: Bottom "Tap to continue" Label matching image_67df016a.png */}
+              {clinicDialogueStep === 11 && (
+                <div className="restore-clinic-tap-continue" aria-hidden="true">
+                  {FIXED_CLINIC_DIALOGUE.tapToContinueText}
+                </div>
+              )}
+            </div>
+
+            {/* Interactive HUD Layer with Top-Left Back Button (anchored to visible stage) */}
+            <div className="glitchtopia-hud-layer">
+              <button
+                type="button"
+                aria-label={lang === 'VI' ? 'Quay lại' : 'Back'}
+                title={lang === 'VI' ? 'Quay lại' : 'Back'}
+                onMouseEnter={() => sound.playHover()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  backToHub();
+                }}
+                className="memory-terminal-back-btn"
+              >
+                <svg
+                  viewBox="0 0 28 28"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5"
+                >
+                  <path
+                    d="M18.5 5L14.2 9.3M11.6 11.9L9.5 14L18.5 23"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
+              {canShowClinicSkip && (
+                <button
+                  type="button"
+                  aria-label="Skip"
+                  title="Skip"
+                  onMouseEnter={() => sound.playHover()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleClinicSkip();
+                  }}
+                  className="restore-clinic-skip-btn"
+                >
+                  <span>Skip</span>
+                  <svg
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="restore-clinic-skip-icon"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M4.5 5L9.5 10L4.5 15M10.5 5L15.5 10L10.5 15"
+                      stroke="currentColor"
+                      strokeWidth="2.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -2591,7 +4739,7 @@ export default function App() {
                   viewBox="0 0 28 28"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="w-7 h-7"
+                  className="w-5 h-5"
                 >
                   <path
                     d="M18.5 5L14.2 9.3M11.6 11.9L9.5 14L18.5 23"
@@ -2653,6 +4801,16 @@ export default function App() {
               })}
             </div>
           </div>
+        )}
+
+        {currentPage === 'defense-intercept' && (
+          <Suspense fallback={null}>
+            <RobotTouchSection
+              lang={lang}
+              isBootReady={isWallReady}
+              onNavigateGlitchtopiaHub={backToHub}
+            />
+          </Suspense>
         )}
       </main>
     </div>

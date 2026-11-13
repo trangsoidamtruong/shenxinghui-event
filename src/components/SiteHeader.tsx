@@ -6,12 +6,19 @@ export interface SubTabItem {
   label: string;
 }
 
+export interface BreadcrumbItem {
+  label: string;
+  href: string;
+  onClick?: () => void;
+}
+
 interface SiteHeaderProps {
   lang: 'VI' | 'EN';
   currentEventTitle: string;
   currentEventSlug?: string;
   onClickCurrentEvent?: () => void;
   onToggleLang: () => void;
+  breadcrumbs?: BreadcrumbItem[];
   subTabs?: SubTabItem[];
   activeSubTabId?: string;
   onSelectSubTab?: (id: string) => void;
@@ -35,6 +42,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   currentEventSlug = '/glitchtopia',
   onClickCurrentEvent,
   onToggleLang,
+  breadcrumbs,
   subTabs,
   activeSubTabId,
   onSelectSubTab,
@@ -64,40 +72,76 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               {rootLabel}
             </a>
 
-            <span className="site-crumb-sep" aria-hidden="true">
-              &gt;
-            </span>
+            {breadcrumbs && breadcrumbs.length > 0 ? (
+              breadcrumbs.map((crumb, idx) => {
+                const isLast = idx === breadcrumbs.length - 1;
+                return (
+                  <React.Fragment key={`${crumb.label}-${idx}`}>
+                    <span className="site-crumb-sep" aria-hidden="true">
+                      &gt;
+                    </span>
+                    <a
+                      href={crumb.href}
+                      aria-current={isLast ? 'page' : undefined}
+                      onMouseEnter={() => {
+                        if (!isLast) sound.playHover();
+                      }}
+                      onClick={(e) => {
+                        if (crumb.onClick || isLast) {
+                          e.preventDefault();
+                          if (!isLast) sound.playSelect();
+                          crumb.onClick?.();
+                        }
+                      }}
+                      className={
+                        isLast
+                          ? 'site-crumb-current truncate no-underline font-bold'
+                          : 'site-crumb-link truncate no-underline'
+                      }
+                    >
+                      {crumb.label}
+                    </a>
+                  </React.Fragment>
+                );
+              })
+            ) : (
+              <>
+                <span className="site-crumb-sep" aria-hidden="true">
+                  &gt;
+                </span>
 
-            <a
-              href="https://shenxinghui.vercel.app/events"
-              target="_top"
-              title={eventsTitle}
-              onMouseEnter={() => sound.playHover()}
-              onClick={(e) => {
-                e.preventDefault();
-                sound.playSelect();
-                navigateSameTab('https://shenxinghui.vercel.app/events');
-              }}
-              className="site-crumb-link"
-            >
-              {eventsLabel}
-            </a>
+                <a
+                  href="https://shenxinghui.vercel.app/events"
+                  target="_top"
+                  title={eventsTitle}
+                  onMouseEnter={() => sound.playHover()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    sound.playSelect();
+                    navigateSameTab('https://shenxinghui.vercel.app/events');
+                  }}
+                  className="site-crumb-link"
+                >
+                  {eventsLabel}
+                </a>
 
-            <span className="site-crumb-sep" aria-hidden="true">
-              &gt;
-            </span>
+                <span className="site-crumb-sep" aria-hidden="true">
+                  &gt;
+                </span>
 
-            <a
-              href={currentEventSlug}
-              aria-current="page"
-              onClick={(e) => {
-                e.preventDefault();
-                onClickCurrentEvent?.();
-              }}
-              className="site-crumb-current truncate no-underline"
-            >
-              {currentEventTitle}
-            </a>
+                <a
+                  href={currentEventSlug}
+                  aria-current="page"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onClickCurrentEvent?.();
+                  }}
+                  className="site-crumb-current truncate no-underline"
+                >
+                  {currentEventTitle}
+                </a>
+              </>
+            )}
           </nav>
 
           <button
