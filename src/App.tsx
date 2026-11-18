@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
-import { SiteHeader } from './components/SiteHeader';
 import { sound } from './utils/sound';
+import { MEMORY_TERMINAL_SCRIPTS } from './data/memoryTerminalData';
 
 const RobotTouchSection = React.lazy(() =>
   import('./components/RobotTouchSection').then((m) => ({
@@ -15,6 +15,8 @@ const RobotTouchSection = React.lazy(() =>
 
 const CLOUDINARY_OPT = 'https://res.cloudinary.com/trangsoidamtruong/image/upload/f_auto,q_auto';
 const CLOUDINARY_RAW = 'https://res.cloudinary.com/trangsoidamtruong/image/upload';
+const GLITCHTOPIA_BGM_URL =
+  'https://res.cloudinary.com/trangsoidamtruong/video/upload/v1795000997/Binary_Dreams_-_Rebooting_Dreams.mp3';
 
 const ASSETS = {
   wall: {
@@ -1108,15 +1110,15 @@ type GlitchtopiaPage =
   | 'defense-intercept';
 const GLITCHTOPIA_SLUG = '/glitchtopia';
 
-function getInitialLang(): 'VI' | 'EN' {
+function getInitialLang(): 'VI' | 'EN' | 'ZH' {
   if (typeof window === 'undefined') return 'VI';
   try {
     const params = new URLSearchParams(window.location.search);
     const qLang = params.get('lang')?.toUpperCase();
-    if (qLang === 'EN' || qLang === 'VI') return qLang;
+    if (qLang === 'EN' || qLang === 'VI' || qLang === 'ZH') return qLang;
 
     const saved = window.localStorage.getItem('tsdt_lang')?.toUpperCase();
-    if (saved === 'EN' || saved === 'VI') return saved;
+    if (saved === 'EN' || saved === 'VI' || saved === 'ZH') return saved;
   } catch {
     // Ignore storage access errors in restricted iframes
   }
@@ -1124,9 +1126,14 @@ function getInitialLang(): 'VI' | 'EN' {
 }
 
 export default function App() {
-  const [lang, setLang] = useState<'VI' | 'EN'>(getInitialLang);
+  const [lang, setLang] = useState<'VI' | 'EN' | 'ZH'>(getInitialLang);
   const [currentPage, setCurrentPage] = useState<GlitchtopiaPage>('hub');
   const [isWallReady, setIsWallReady] = useState<boolean>(false);
+
+  const toggleLang = useCallback(() => {
+    sound.playSelect();
+    setLang((prev) => (prev === 'VI' ? 'EN' : prev === 'EN' ? 'ZH' : 'VI'));
+  }, []);
 
   // For Memory Terminal chapter cards:
   // - hoveredChapter: active on PC/Laptop hover
@@ -1135,6 +1142,7 @@ export default function App() {
   const [hoveredChapter, setHoveredChapter] = useState<number | null>(null);
   const [tappedChapter, setTappedChapter] = useState<number | null>(null);
   const [chosenChapter, setChosenChapter] = useState<number | null>(null);
+  const memoryScrollRef = useRef<HTMLDivElement | null>(null);
 
   // Robot Plant Pot 3-expression cycle (0: vertical pixel eyes, 1: horizontal sleeping bars, 2: hollow circles + arcs)
   const [plantFaceIndex, setPlantFaceIndex] = useState<number>(0);
@@ -1345,11 +1353,12 @@ export default function App() {
   const puzzledBlobRef = useRef<Blob | null>(null);
   const questionBlobRef = useRef<Blob | null>(null);
   const activeObjectUrlRef = useRef<string | null>(null);
+  const activeDecoderImgRef = useRef<HTMLImageElement | null>(null);
+  const reactionReqIdRef = useRef<number>(0);
   const isHappyPlayingRef = useRef<boolean>(false);
   const activeReactionSourceRef = useRef<'chibi' | 'plant' | 'computer' | 'robot'>('chibi');
   const activeReactionPoseRef = useRef<'happy' | 'puzzled' | 'question'>('happy');
   const [happyPlaySrc, setHappyPlaySrc] = useState<string | null>(null);
-  const [happyPlayKey, setHappyPlayKey] = useState<number>(0);
   const [activeReactionPose, setActiveReactionPose] = useState<
     'happy' | 'puzzled' | 'question'
   >('happy');
@@ -1359,14 +1368,9 @@ export default function App() {
     'chibi' | 'plant' | 'computer' | 'robot'
   >('chibi');
 
-  const revealIdleTimerRef = useRef<number | null>(null);
   const hideHappyTimerRef = useRef<number | null>(null);
 
   const clearChibiTimers = useCallback(() => {
-    if (revealIdleTimerRef.current !== null) {
-      window.clearTimeout(revealIdleTimerRef.current);
-      revealIdleTimerRef.current = null;
-    }
     if (hideHappyTimerRef.current !== null) {
       window.clearTimeout(hideHappyTimerRef.current);
       hideHappyTimerRef.current = null;
@@ -1400,8 +1404,10 @@ export default function App() {
     loadBlob([ASSETS.chibiQuestion.remote], questionBlobRef);
     return () => {
       cancelled = true;
+      reactionReqIdRef.current += 1;
       clearChibiTimers();
       isHappyPlayingRef.current = false;
+      activeDecoderImgRef.current = null;
       if (activeObjectUrlRef.current) {
         URL.revokeObjectURL(activeObjectUrlRef.current);
         activeObjectUrlRef.current = null;
@@ -1442,10 +1448,10 @@ export default function App() {
 
       activeReactionSourceRef.current = source;
       activeReactionPoseRef.current = nextPose;
-      setSpeechSource(source);
-      setActiveReactionPose(nextPose);
       isHappyPlayingRef.current = true;
       clearChibiTimers();
+
+      const reqId = ++reactionReqIdRef.current;
 
       const blob =
         nextPose === 'puzzled'
@@ -1461,20 +1467,69 @@ export default function App() {
             ? ASSETS.chibiQuestion.remote
             : ASSETS.chibiHappy.remote;
 
-      // Create a fresh in-memory ObjectURL so the browser starts WebP animation at Frame 0
-      let nextSrc: string;
-      if (blob) {
-        if (activeObjectUrlRef.current) {
+      // Create a fresh in-memory ObjectURL and pre-decode Frame 0 BEFORE swapping DOM layers
+      // so there is 0ms blank gap and 0ms dual-character overlap
+      const nextSrc = blob
+        ? URL.createObjectURL(blob)
+        : `${fallbackUrl}?t=${Date.now()}`;
+
+      const preImg = new Image();
+      preImg.decoding = 'sync';
+      preImg.src = nextSrc;
+
+      const commitSwap = () => {
+        if (reqId !== reactionReqIdRef.current) {
+          if (blob) {
+            URL.revokeObjectURL(nextSrc);
+          }
+          return;
+        }
+
+        if (activeObjectUrlRef.current && activeObjectUrlRef.current !== nextSrc) {
           URL.revokeObjectURL(activeObjectUrlRef.current);
         }
-        nextSrc = URL.createObjectURL(blob);
-        activeObjectUrlRef.current = nextSrc;
-      } else {
-        nextSrc = `${fallbackUrl}?t=${Date.now()}`;
-      }
+        activeObjectUrlRef.current = blob ? nextSrc : null;
+        activeDecoderImgRef.current = preImg;
 
-      setHappyPlayKey((k) => k + 1);
-      setHappyPlaySrc(nextSrc);
+        // Batch all visual state updates into the exact same render frame
+        setSpeechSource(source);
+        setActiveReactionPose(nextPose);
+        setHappyPlaySrc(nextSrc);
+        setIsIdleMasked(true);
+        setShowSpeechBubble(true);
+
+        // Exact 1-cycle durations from WebP ANMF frame headers:
+        // - chibi-happy: 30 frames * 65ms = 1950ms
+        // - chibi-puzzled: 32 frames * 65ms = 2080ms
+        // - chibi-question: 43 frames * 65ms = 2795ms
+        const cycleMs =
+          nextPose === 'question' ? 2785 : nextPose === 'puzzled' ? 2070 : 1940;
+
+        hideHappyTimerRef.current = window.setTimeout(() => {
+          if (reqId !== reactionReqIdRef.current) return;
+          // Swap back to chibi-idle in a single atomic render so 2 characters never overlap
+          setIsIdleMasked(false);
+          setHappyPlaySrc(null);
+          setShowSpeechBubble(false);
+          activeDecoderImgRef.current = null;
+          if (source === 'robot') {
+            setIsRobotBursting(false);
+            if (robotBurstTimerRef.current !== null) {
+              window.clearTimeout(robotBurstTimerRef.current);
+              robotBurstTimerRef.current = null;
+            }
+          }
+          isHappyPlayingRef.current = false;
+          hideHappyTimerRef.current = null;
+        }, cycleMs);
+      };
+
+      if (typeof preImg.decode === 'function') {
+        preImg.decode().then(commitSwap).catch(commitSwap);
+      } else {
+        preImg.onload = commitSwap;
+        preImg.onerror = commitSwap;
+      }
     },
     [clearChibiTimers]
   );
@@ -1537,49 +1592,6 @@ export default function App() {
     };
   }, []);
 
-  // Fired the instant Frame 0 of the fresh chibi reaction ObjectURL is decoded & painted
-  const handleHappyFrameZeroReady = useCallback(() => {
-    setIsIdleMasked(true);
-    setShowSpeechBubble(true);
-
-    if (revealIdleTimerRef.current !== null) {
-      window.clearTimeout(revealIdleTimerRef.current);
-    }
-    if (hideHappyTimerRef.current !== null) {
-      window.clearTimeout(hideHappyTimerRef.current);
-    }
-
-    const src = activeReactionSourceRef.current;
-    const pose = activeReactionPoseRef.current;
-    // Exact 1-cycle durations from WebP ANMF frame headers:
-    // - chibi-happy: 30 frames * 65ms = 1950ms
-    // - chibi-puzzled: 32 frames * 65ms = 2080ms
-    // - chibi-question: 43 frames * 65ms = 2795ms
-    const cycleMs = pose === 'question' ? 2785 : pose === 'puzzled' ? 2070 : 1940;
-    const revealIdleMs = cycleMs - 55;
-
-    // Step 1: restore idle chibi opacity to 1 underneath BEFORE removing reaction layer
-    revealIdleTimerRef.current = window.setTimeout(() => {
-      setIsIdleMasked(false);
-      revealIdleTimerRef.current = null;
-    }, revealIdleMs);
-
-    // Step 2: unmount reaction layer and hide speech bubble simultaneously (and restore robot bubbles if source === 'robot')
-    hideHappyTimerRef.current = window.setTimeout(() => {
-      setHappyPlaySrc(null);
-      setShowSpeechBubble(false);
-      if (src === 'robot') {
-        setIsRobotBursting(false);
-        if (robotBurstTimerRef.current !== null) {
-          window.clearTimeout(robotBurstTimerRef.current);
-          robotBurstTimerRef.current = null;
-        }
-      }
-      isHappyPlayingRef.current = false;
-      hideHappyTimerRef.current = null;
-    }, cycleMs);
-  }, []);
-
   // Ensure URL bar always has the /glitchtopia slug for this event
   useEffect(() => {
     try {
@@ -1600,8 +1612,14 @@ export default function App() {
 
   // Sync document title, <html lang>, and localStorage when language changes
   useEffect(() => {
-    document.title = lang === 'VI' ? 'Trăng Soi Dặm Trường - SK' : 'Moonstride - Events';
-    document.documentElement.lang = lang === 'VI' ? 'vi' : 'en';
+    document.title =
+      lang === 'VI'
+        ? 'Trăng Soi Dặm Trường - SK'
+        : lang === 'ZH'
+          ? '月照长路 - 活动'
+          : 'Moonstride - Events';
+    document.documentElement.lang =
+      lang === 'VI' ? 'vi' : lang === 'ZH' ? 'zh' : 'en';
     try {
       window.localStorage.setItem('tsdt_lang', lang);
     } catch {
@@ -1643,37 +1661,36 @@ export default function App() {
       img.src = url;
     };
 
-    // Run 2 sequential workers in parallel
+    // Run 4 parallel decode workers for fast background warming
+    loadNext();
+    loadNext();
     loadNext();
     loadNext();
   }, []);
 
-  // Tier 1: After Hub wall is ready, gently preload Hub interactive skins & sub-page walls
+  // Tier 1: As soon as Hub wall is ready, immediately preload Memory Terminal wall, all 12 chapter cards, and computer skins
   useEffect(() => {
     if (!isWallReady) return;
     const timer = window.setTimeout(() => {
       enqueuePreload([
+        ASSETS.memoryWall.remote,
+        ...MEMORY_CHAPTERS.flatMap((c) => [c.normalRemote, c.selectRemote]),
         ASSETS.computer1.remote,
         ASSETS.computer2.remote,
+      ]);
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [isWallReady, enqueuePreload]);
+
+  // Tier 2: Preload Care Log / Restore Clinic assets only if user navigates there
+  useEffect(() => {
+    if (currentPage === 'care-log' || currentPage === 'restore-clinic') {
+      enqueuePreload([
         ASSETS.careLogWall.remote,
-        ASSETS.memoryWall.remote,
         ASSETS.restoreClinicWall.remote,
         ASSETS.scanButton.remote,
         ASSETS.chibiCare.remote,
         ASSETS.scanning.remote,
-      ]);
-    }, 350);
-    return () => window.clearTimeout(timer);
-  }, [isWallReady, enqueuePreload]);
-
-  // Tier 2: Preload Memory Terminal cards or Care Log chibis based on active page
-  useEffect(() => {
-    if (currentPage === 'memory-terminal') {
-      enqueuePreload(
-        MEMORY_CHAPTERS.flatMap((c) => [c.normalRemote, c.selectRemote])
-      );
-    } else if (currentPage === 'care-log' || currentPage === 'restore-clinic') {
-      enqueuePreload([
         ASSETS.chibiEyeBattery.remote,
         ASSETS.chibiStarTorn.remote,
         ASSETS.chibiPlantPatch.remote,
@@ -2038,15 +2055,24 @@ export default function App() {
     });
   }, [clearClinicHappyTimers]);
 
+  const selectMemoryChapter = useCallback((chapterNum: number) => {
+    setTappedChapter(chapterNum);
+    setChosenChapter(chapterNum);
+    window.requestAnimationFrame(() => {
+      if (memoryScrollRef.current) {
+        memoryScrollRef.current.scrollTop = 0;
+      }
+    });
+  }, []);
+
   const handleChapterClick = (chapterNum: number) => {
     const isDesktop =
       typeof window !== 'undefined' &&
-      window.matchMedia('(min-width: 1024px) and (hover: hover)').matches;
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
     if (isDesktop) {
       sound.playSuccess();
-      setTappedChapter(chapterNum);
-      setChosenChapter(chapterNum);
+      selectMemoryChapter(chapterNum);
       return;
     }
 
@@ -2057,25 +2083,65 @@ export default function App() {
       setChosenChapter(null);
     } else {
       sound.playSuccess();
-      setChosenChapter(chapterNum);
+      selectMemoryChapter(chapterNum);
     }
   };
 
-  return (
-    <div className="h-[100dvh] w-full overflow-hidden bg-[#07060f] text-[#e6e2f5] flex flex-col select-none">
-      {/* Breadcrumb Navigation Bar: TSDT > SỰ KIỆN > GLITCHTOPIA */}
-      <SiteHeader
-        lang={lang}
-        currentEventTitle="GLITCHTOPIA"
-        currentEventSlug={GLITCHTOPIA_SLUG}
-        onClickCurrentEvent={() => {
-          if (currentPage !== 'hub') {
-            backToHub();
-          }
-        }}
-        onToggleLang={() => setLang((l) => (l === 'VI' ? 'EN' : 'VI'))}
-      />
+  const bgmAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  useEffect(() => {
+    if (!GLITCHTOPIA_BGM_URL || !isWallReady) return;
+    const audio = bgmAudioRef.current;
+    if (!audio) return;
+
+    audio.loop = true;
+    audio.volume = 0.55;
+
+    const tryPlayBgm = () => {
+      if (audio.paused) {
+        audio.play().catch(() => {
+          // Wait for first user gesture if browser blocks initial unmuted autoplay
+        });
+      }
+    };
+
+    tryPlayBgm();
+
+    const unlockOnGesture = () => {
+      if (audio.paused) {
+        audio.play().catch(() => {});
+      }
+    };
+
+    window.addEventListener('pointerdown', unlockOnGesture, { passive: true });
+    window.addEventListener('touchstart', unlockOnGesture, { passive: true });
+    window.addEventListener('click', unlockOnGesture, { passive: true });
+    window.addEventListener('keydown', unlockOnGesture, { passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlockOnGesture);
+      window.removeEventListener('touchstart', unlockOnGesture);
+      window.removeEventListener('click', unlockOnGesture);
+      window.removeEventListener('keydown', unlockOnGesture);
+    };
+  }, [isWallReady]);
+
+  return (
+    <div className="app-portrait-shell h-[100dvh] w-full overflow-hidden bg-[#07060f] text-[#e6e2f5] flex flex-col select-none">
+      {GLITCHTOPIA_BGM_URL && (
+        <audio
+          ref={bgmAudioRef}
+          src={GLITCHTOPIA_BGM_URL}
+          autoPlay
+          loop
+          preload="auto"
+          onCanPlay={() => {
+            if (isWallReady && bgmAudioRef.current?.paused) {
+              bgmAudioRef.current.play().catch(() => {});
+            }
+          }}
+          className="hidden"
+        />
+      )}
       {/* Glitchtopia Event Viewport */}
       <main className="glitchtopia-viewport">
         {/* Fast Cyberpunk Boot Loader while main background decodes */}
@@ -2363,8 +2429,6 @@ export default function App() {
                     alt="Floating Spherical Drone Robot"
                     className="glitchtopia-robot-drone-img"
                   />
-                  {/* Subtle inner eye glow effect */}
-                  <span className="robot-eye-glow" aria-hidden="true" />
                 </button>
               </div>
 
@@ -2395,15 +2459,15 @@ export default function App() {
                   rawRemoteSrc={ASSETS.chibiIdle.rawRemote}
                   localSrc={ASSETS.chibiIdle.local}
                   alt="Xavier Chibi"
+                  decoding="sync"
                   className={`glitchtopia-chibi-img is-idle ${!isIdleMasked ? 'is-visible' : 'is-hidden'}`}
                 />
                 {happyPlaySrc && (
                   <img
-                    key={happyPlayKey}
                     src={happyPlaySrc}
                     alt={`Xavier Chibi ${activeReactionPose}`}
+                    decoding="sync"
                     draggable={false}
-                    onLoad={handleHappyFrameZeroReady}
                     className={`glitchtopia-chibi-img is-${activeReactionPose} is-visible`}
                   />
                 )}
@@ -2421,6 +2485,11 @@ export default function App() {
                 <div
                   className={`chibi-speech-bubble ${
                     speechSource !== 'chibi' ? 'is-plant-quote' : ''
+                  } ${
+                    lang === 'VI' &&
+                    (speechSource === 'robot' || speechSource === 'computer')
+                      ? 'is-three-lines'
+                      : ''
                   }`}
                   role="status"
                   aria-live="polite"
@@ -2489,19 +2558,84 @@ export default function App() {
 
                   <div className="chibi-speech-text">
                     {speechSource === 'plant' ? (
-                      <>
-                        <span>It&apos;ll never struggle to find</span>
-                        <span>two matching leaves.</span>
-                      </>
+                      lang === 'VI' ? (
+                        <>
+                          <span>Không khó khăn để kiếm ra</span>
+                          <span>hai chiếc lá giống nhau đâu.</span>
+                        </>
+                      ) : lang === 'ZH' ? (
+                        <>
+                          <span>它不会有找得到两片</span>
+                          <span>相同叶子的烦恼。</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>It&apos;ll never struggle to find</span>
+                          <span>two matching leaves.</span>
+                        </>
+                      )
                     ) : speechSource === 'computer' ? (
-                      <>
-                        <span>The documentary was good</span>
-                        <span>until the paywall.</span>
-                      </>
+                      lang === 'VI' ? (
+                        <>
+                          <span>&ldquo;Đừng tự ý tiếp xúc với</span>
+                          <span>người ngoài hành tinh&rdquo; sao?</span>
+                          <span>Tin cũ rích rồi.</span>
+                        </>
+                      ) : lang === 'ZH' ? (
+                        <>
+                          <span>“不要擅自接触外星人？”</span>
+                          <span>这新闻不太新了。</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>&ldquo;No unauthorized alien contact&rdquo;?</span>
+                          <span>Old news.</span>
+                        </>
+                      )
                     ) : speechSource === 'robot' ? (
+                      lang === 'VI' ? (
+                        <>
+                          <span>Biết đâu thiên thể trong vũ trụ</span>
+                          <span>chỉ là bong bóng do thực thể</span>
+                          <span>ở chiều không gian cao hơn thổi ra nhỉ?</span>
+                        </>
+                      ) : lang === 'ZH' ? (
+                        <>
+                          <span>宇宙星体，或许只是</span>
+                          <span>高维存在吹出的泡泡。</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>What if stars are bubbles</span>
+                          <span>higher beings blow?</span>
+                        </>
+                      )
+                    ) : activeReactionPose === 'puzzled' ? (
+                      lang === 'VI' ? (
+                        <>
+                          <span>Phim tài liệu đang đến đoạn gay cấn</span>
+                          <span>thì tự nhiên nhảy ra yêu cầu trả phí.</span>
+                        </>
+                      ) : lang === 'ZH' ? (
+                        <>
+                          <span>纪录片正看到精彩处，</span>
+                          <span>突然弹出了付费页面。</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>The documentary was good</span>
+                          <span>until the paywall.</span>
+                        </>
+                      )
+                    ) : lang === 'VI' ? (
                       <>
-                        <span>What if stars are bubbles</span>
-                        <span>higher beings blow?</span>
+                        <span>Bàn tay em ấm quá, lại có thêm</span>
+                        <span>một lý do để yêu thế giới này rồi.</span>
+                      </>
+                    ) : lang === 'ZH' ? (
+                      <>
+                        <span>掌心很温暖，喜欢这个世界的</span>
+                        <span>理由多了一条。</span>
                       </>
                     ) : (
                       <>
@@ -2516,6 +2650,26 @@ export default function App() {
 
             {/* Interactive Event HUD Overlay */}
             <div className="glitchtopia-hud-layer">
+              <button
+                type="button"
+                title={
+                  lang === 'VI'
+                    ? 'Chuyển sang Tiếng Anh (EN)'
+                    : lang === 'EN'
+                      ? '切换到中文 (ZH)'
+                      : 'Chuyển sang Tiếng Việt (VI)'
+                }
+                aria-label="Toggle language VI/EN/ZH"
+                onMouseEnter={() => sound.playHover()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleLang();
+                }}
+                className="glitchtopia-lang-btn"
+              >
+                {lang}
+              </button>
+
               {/* Top-Left Game Title Logo with Cyberpunk / Sci-Fi Hologram Effects */}
               <div className="glitchtopia-logo-wrap" aria-hidden="false">
                 {/* Vertical left cyber signal line */}
@@ -2577,13 +2731,13 @@ export default function App() {
                 />
               </button>
 
-              {/* Bottom-Left: Care Log Button */}
+              {/* Bottom-Left: Care Log Button (Not clickable yet) */}
               <button
                 type="button"
+                disabled
+                aria-disabled="true"
                 aria-label="Care Log"
-                onMouseEnter={() => sound.playHover()}
-                onClick={openCareLog}
-                className="glitchtopia-btn glitchtopia-btn-care"
+                className="glitchtopia-btn glitchtopia-btn-care is-disabled"
               >
                 <AssetImg
                   remoteSrc={ASSETS.careLog.remote}
@@ -2593,13 +2747,13 @@ export default function App() {
                 />
               </button>
 
-              {/* Bottom Center-Left: Restore Clinic Button */}
+              {/* Bottom Center-Left: Restore Clinic Button (Not clickable yet) */}
               <button
                 type="button"
+                disabled
+                aria-disabled="true"
                 aria-label="Restore Clinic"
-                onMouseEnter={() => sound.playHover()}
-                onClick={() => sound.playSelect()}
-                className="glitchtopia-btn glitchtopia-btn-restore"
+                className="glitchtopia-btn glitchtopia-btn-restore is-disabled"
               >
                 <AssetImg
                   remoteSrc={ASSETS.restoreClinic.remote}
@@ -2609,13 +2763,13 @@ export default function App() {
                 />
               </button>
 
-              {/* Bottom-Right: Defense Intercept Button */}
+              {/* Bottom-Right: Defense Intercept Button (Not clickable yet) */}
               <button
                 type="button"
+                disabled
+                aria-disabled="true"
                 aria-label="Defense Intercept"
-                onMouseEnter={() => sound.playHover()}
-                onClick={openDefenseIntercept}
-                className="glitchtopia-btn glitchtopia-btn-defense"
+                className="glitchtopia-btn glitchtopia-btn-defense is-disabled"
               >
                 <AssetImg
                   remoteSrc={ASSETS.defenseIntercept.remote}
@@ -4701,37 +4855,116 @@ export default function App() {
           </div>
         )}
 
-        {currentPage === 'memory-terminal' && (
-          <div
-            className="glitchtopia-stage is-ready"
-            onClick={() => {
-              // Clicking empty background resets tapped/chosen chapter state
-              if (tappedChapter !== null || chosenChapter !== null) {
-                setTappedChapter(null);
-                setChosenChapter(null);
-              }
-            }}
-          >
+        {/* Keep Memory Terminal stage mounted in VRAM so opening Memory Terminal & hovering/tapping cards is 0ms instant */}
+        <div
+          className={`glitchtopia-stage ${
+            currentPage === 'memory-terminal'
+              ? 'is-ready'
+              : 'is-background-stage'
+          }`}
+          aria-hidden={currentPage !== 'memory-terminal'}
+          onClick={() => {
+            // Clicking empty background resets tapped/chosen chapter state
+            if (tappedChapter !== null || chosenChapter !== null) {
+              setTappedChapter(null);
+              setChosenChapter(null);
+            }
+          }}
+        >
+          {/* Coordinate-locked 1640x2360 Memory Terminal Scene Canvas */}
+          <div className="glitchtopia-scene-canvas" data-chosen-chapter={chosenChapter ?? ''}>
             {/* Memory Terminal Background Image */}
             <AssetImg
               remoteSrc={ASSETS.memoryWall.remote}
               rawRemoteSrc={ASSETS.memoryWall.rawRemote}
               localSrc={ASSETS.memoryWall.local}
               alt="Memory Terminal Background"
-              className="glitchtopia-wall-img"
+              className="glitchtopia-scene-wall"
             />
 
-            {/* Interactive Chapter Cards Layer */}
-            <div className="glitchtopia-hud-layer" data-chosen-chapter={chosenChapter ?? ''}>
-              {/* Back Button to return to Glitchtopia main hub (frameless) */}
+            {/* 6 Diagonal Chapter Cards (05 down to 00) locked to 1640x2360 recess */}
+            {MEMORY_CHAPTERS.map((item) => {
+              const isChosen = chosenChapter === item.chapter;
+              const isShifted =
+                isChosen ||
+                hoveredChapter === item.chapter ||
+                tappedChapter === item.chapter;
+
+              return (
+                <button
+                  key={item.chapter}
+                  type="button"
+                  data-chapter={item.chapter}
+                  aria-label={item.label}
+                  onMouseEnter={() => {
+                    if (
+                      typeof window !== 'undefined' &&
+                      window.matchMedia('(hover: hover) and (pointer: fine)').matches
+                    ) {
+                      sound.playHover();
+                      setHoveredChapter(item.chapter);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    if (hoveredChapter === item.chapter) {
+                      setHoveredChapter(null);
+                    }
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleChapterClick(item.chapter);
+                  }}
+                  className={`memory-chapter-card ${isShifted ? 'is-shifted' : ''} ${
+                    isChosen ? 'is-chosen' : ''
+                  }`}
+                >
+                  <AssetImg
+                    remoteSrc={item.normalRemote}
+                    rawRemoteSrc={item.normalRawRemote}
+                    localSrc={item.normalLocal}
+                    alt={item.label}
+                    className="memory-card-img is-normal"
+                  />
+                  <AssetImg
+                    remoteSrc={item.selectRemote}
+                    rawRemoteSrc={item.selectRawRemote}
+                    localSrc={item.selectLocal}
+                    alt=""
+                    aria-hidden="true"
+                    className="memory-card-img is-select"
+                  />
+                </button>
+              );
+            })}
+          </div>
+
+            {/* Interactive HUD Layer with Top-Left Back Button and Chapter Reader */}
+            <div className="glitchtopia-hud-layer">
               <button
                 type="button"
-                aria-label={lang === 'VI' ? 'Quay lại Glitchtopia' : 'Back to Glitchtopia'}
-                title={lang === 'VI' ? 'Quay lại Glitchtopia' : 'Back to Glitchtopia'}
+                aria-label={
+                  chosenChapter !== null
+                    ? 'Quay lại danh sách chương'
+                    : lang === 'VI'
+                      ? 'Quay lại Glitchtopia'
+                      : 'Back to Glitchtopia'
+                }
+                title={
+                  chosenChapter !== null
+                    ? 'Quay lại danh sách chương'
+                    : lang === 'VI'
+                      ? 'Quay lại Glitchtopia'
+                      : 'Back to Glitchtopia'
+                }
                 onMouseEnter={() => sound.playHover()}
                 onClick={(e) => {
                   e.stopPropagation();
-                  backToHub();
+                  if (chosenChapter !== null) {
+                    sound.playSelect();
+                    setChosenChapter(null);
+                  } else {
+                    backToHub();
+                  }
                 }}
                 className="memory-terminal-back-btn"
               >
@@ -4751,62 +4984,89 @@ export default function App() {
                 </svg>
               </button>
 
-              {/* 6 Diagonal Chapter Cards (05 down to 00) */}
-              {MEMORY_CHAPTERS.map((item) => {
-                const isChosen = chosenChapter === item.chapter;
-                const isShifted =
-                  isChosen ||
-                  hoveredChapter === item.chapter ||
-                  tappedChapter === item.chapter;
-                const activeRemote = isShifted ? item.selectRemote : item.normalRemote;
-                const activeRawRemote = isShifted ? item.selectRawRemote : item.normalRawRemote;
-                const activeLocal = isShifted ? item.selectLocal : item.normalLocal;
+              <button
+                type="button"
+                title={
+                  lang === 'VI'
+                    ? 'Chuyển sang Tiếng Anh (EN)'
+                    : lang === 'EN'
+                      ? '切换到中文 (ZH)'
+                      : 'Chuyển sang Tiếng Việt (VI)'
+                }
+                aria-label="Toggle language VI/EN/ZH"
+                onMouseEnter={() => sound.playHover()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleLang();
+                }}
+                className="glitchtopia-lang-btn"
+              >
+                {lang}
+              </button>
+
+              {chosenChapter !== null && MEMORY_TERMINAL_SCRIPTS[chosenChapter] && (() => {
+                const activeScript = MEMORY_TERMINAL_SCRIPTS[chosenChapter];
+                const scriptEntries = activeScript.entries;
 
                 return (
-                  <button
-                    key={item.chapter}
-                    type="button"
-                    data-chapter={item.chapter}
-                    aria-label={item.label}
-                    onMouseEnter={() => {
-                      if (
-                        typeof window !== 'undefined' &&
-                        window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches
-                      ) {
-                        sound.playHover();
-                        setHoveredChapter(item.chapter);
-                      }
-                    }}
-                    onMouseLeave={() => {
-                      if (hoveredChapter === item.chapter) {
-                        setHoveredChapter(null);
-                      }
-                    }}
+                  <div
+                    className="memory-reader-overlay"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleChapterClick(item.chapter);
                     }}
-                    className={`memory-chapter-card ${isShifted ? 'is-shifted' : ''} ${
-                      isChosen ? 'is-chosen' : ''
-                    }`}
                   >
-                    <AssetImg
-                      remoteSrc={activeRemote}
-                      rawRemoteSrc={activeRawRemote}
-                      localSrc={activeLocal}
-                      alt={item.label}
-                    />
-                  </button>
+                    <div
+                      ref={memoryScrollRef}
+                      className="memory-reader-scroll"
+                      role="region"
+                      aria-label={`${activeScript.code} ${activeScript.title}`}
+                    >
+                      <header className="memory-reader-InlineHeader">
+                        <span className="memory-reader-code">{activeScript.code}</span>
+                        <h2 className="memory-reader-title">{activeScript.title}</h2>
+                      </header>
+
+                      <div className="memory-reader-entries">
+                        {scriptEntries.map((entry, idx) => {
+                          if (entry.type === 'narration') {
+                            return (
+                              <p key={idx} className="memory-entry-narration">
+                                {entry.text}
+                              </p>
+                            );
+                          }
+
+                          const roleClass =
+                            entry.role === 'xavier'
+                              ? 'is-xavier'
+                              : entry.role === 'mc'
+                                ? 'is-mc'
+                                : 'is-npc';
+
+                          return (
+                            <p
+                              key={idx}
+                              className={`memory-entry-dialogue ${roleClass}`}
+                            >
+                              <span className="memory-entry-speaker">
+                                {entry.speaker}:
+                              </span>{' '}
+                              <span className="memory-entry-text">{entry.text}</span>
+                            </p>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 );
-              })}
+              })()}
             </div>
           </div>
-        )}
 
         {currentPage === 'defense-intercept' && (
           <Suspense fallback={null}>
             <RobotTouchSection
-              lang={lang}
+              lang={lang === 'EN' ? 'EN' : 'VI'}
               isBootReady={isWallReady}
               onNavigateGlitchtopiaHub={backToHub}
             />

@@ -341,7 +341,7 @@ a {
 .glitchtopia-viewport {
   position: relative;
   width: 100%;
-  height: calc(100% - 48px);
+  height: 100%;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -414,12 +414,12 @@ a {
 /* 1640x2360 Coordinate-Locked Scene Canvas for Hub Room, Computer & Chibi */
 .glitchtopia-scene-canvas {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 54%;
-  transform: translateX(-54%);
-  height: 100%;
+  transform: translate(-54%, -50%);
+  width: max(100cqw, calc(100cqh * 1640 / 2360));
+  height: auto;
   aspect-ratio: 1640 / 2360;
-  min-width: 100%;
   pointer-events: none;
 }
 
@@ -428,21 +428,19 @@ a {
   top: 52%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: max(100%, min(148%, calc(140cqh * 1640 / 2360)));
+  width: max(100cqw, calc(100cqh * 1640 / 2360), min(148%, calc(140cqh * 1640 / 2360)));
   height: auto;
-  min-width: 100%;
-  min-height: 100%;
   aspect-ratio: 1640 / 2360;
 }
 
 /* Restore Clinic Scene Canvas: dead-center the capsule chamber on Phone & Tablet */
 .glitchtopia-scene-canvas.is-restore-clinic-canvas {
-  top: 0;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
-  height: 100%;
+  transform: translate(-50%, -50%);
+  width: max(100cqw, calc(100cqh * 1640 / 2360));
+  height: auto;
   aspect-ratio: 1640 / 2360;
-  min-width: 100%;
 }
 
 .glitchtopia-scene-wall {
@@ -956,20 +954,21 @@ a {
 @container portrait-shell (min-width: 640px) {
   .glitchtopia-scene-canvas,
   .glitchtopia-scene-canvas.is-restore-clinic-canvas {
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
-    min-width: 100%;
-    min-height: 100%;
+    transform: translate(-50%, -50%);
+    width: max(100cqw, calc(100cqh * 1640 / 2360));
+    height: auto;
+    aspect-ratio: 1640 / 2360;
   }
 
   .glitchtopia-scene-canvas.is-care-log-canvas {
     top: 51%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: max(100%, min(124%, calc(122cqh * 1640 / 2360)));
+    width: max(100cqw, calc(100cqh * 1640 / 2360), min(124%, calc(122cqh * 1640 / 2360)));
     height: auto;
-    min-width: 100%;
-    min-height: 100%;
+    aspect-ratio: 1640 / 2360;
   }
 
   /* Tablet view Scan button position matching Hình 1 (1640x2360 reference) */
@@ -985,8 +984,9 @@ a {
   }
 }
 
-/* PC / Laptop (>= 1024px with mouse/trackpad): keep full uncropped 1640x2360 image centered in the middle of the screen */
-@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+/* PC / Laptop & Wide Desktop Panes: keep full uncropped 1640x2360 image centered in the middle of the screen */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine),
+  (min-aspect-ratio: 1640 / 2360) and (hover: hover) and (pointer: fine) {
   .glitchtopia-stage {
     height: 100%;
     width: auto;
@@ -1131,8 +1131,7 @@ a {
   outline: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.65))
-    drop-shadow(0 0 16px rgba(56, 189, 248, 0.4));
+  filter: none;
   animation: robot-drone-float 4.2s ease-in-out infinite;
   transition: transform 180ms cubic-bezier(0.2, 0.85, 0.25, 1);
 }
@@ -1152,25 +1151,6 @@ a {
   max-width: none;
   pointer-events: none;
   user-select: none;
-  border-radius: 50%;
-}
-
-.robot-eye-glow {
-  position: absolute;
-  top: 36%;
-  right: 20%;
-  width: 28%;
-  height: 28%;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(147, 245, 255, 0.85) 0%,
-    rgba(56, 189, 248, 0.45) 55%,
-    transparent 80%
-  );
-  filter: blur(1.5px);
-  pointer-events: none;
-  animation: robot-eye-pulse 3.2s ease-in-out infinite alternate;
 }
 
 @keyframes robot-drone-float {
@@ -1179,17 +1159,6 @@ a {
   }
   50% {
     transform: translate3d(2px, -8px, 0) rotate(1.2deg);
-  }
-}
-
-@keyframes robot-eye-pulse {
-  0% {
-    opacity: 0.65;
-    transform: scale(0.92);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1.12);
   }
 }
 
@@ -1501,15 +1470,15 @@ a {
 .glitchtopia-chibi-img.is-visible {
   opacity: 1;
   z-index: 2;
-  transition: opacity 0ms linear 0ms;
+  transition: none;
 }
 
-/* Keep opacity slightly above 0 (0.004) so browser never evicts animated WebP decoder buffer,
-   and hold outgoing pose for 35ms while incoming pose is already at opacity 1 to prevent any 1-frame blink */
+/* Keep opacity slightly above 0 (0.001) so browser never evicts animated WebP decoder buffer,
+   with transition: none so idle and reaction poses swap in the exact same frame without ever overlapping */
 .glitchtopia-chibi-img.is-hidden {
-  opacity: 0.004;
+  opacity: 0.001;
   z-index: 1;
-  transition: opacity 0ms linear 35ms;
+  transition: none;
 }
 
 .glitchtopia-chibi-img.is-idle {
@@ -1551,12 +1520,12 @@ a {
 .chibi-speech-bubble {
   position: absolute;
   top: 35.8%;
-  left: 48.0%;
+  left: 47.2%;
   display: inline-flex;
   align-items: center;
   width: max-content;
   min-width: 96px;
-  max-width: 46%;
+  max-width: 51%;
   z-index: 28;
   pointer-events: none;
   user-select: none;
@@ -1566,7 +1535,7 @@ a {
 }
 
 .chibi-speech-bubble.is-plant-quote {
-  max-width: 48%;
+  max-width: 51%;
 }
 
 .chibi-speech-bubble.is-clinic-quote {
@@ -2340,6 +2309,13 @@ a {
   transform: translateY(0) scale(0.98);
 }
 
+.glitchtopia-btn.is-disabled,
+.glitchtopia-btn:disabled {
+  pointer-events: none;
+  cursor: default;
+  transform: none !important;
+}
+
 .glitchtopia-btn img {
   display: block;
   width: 100%;
@@ -2410,9 +2386,48 @@ a {
 /* ==========================================================================
    Memory Terminal Page & Diagonal Chapter Cards Stack
    ========================================================================== */
+.glitchtopia-lang-btn {
+  position: absolute;
+  top: max(2.1%, env(safe-area-inset-top, 0px));
+  right: 2.8%;
+  z-index: 210;
+  pointer-events: auto;
+  touch-action: manipulation;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 21px;
+  padding: 0 5px;
+  background: transparent;
+  border: 1px solid rgba(168, 240, 255, 0.42);
+  border-radius: 3px;
+  color: rgba(232, 248, 255, 0.9);
+  font-family: "Chakra Petch", "Segoe UI", sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  cursor: pointer;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  transition: border-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.glitchtopia-lang-btn:hover,
+.glitchtopia-lang-btn:focus-visible {
+  background: transparent;
+  border-color: rgba(190, 248, 255, 0.85);
+  color: #ffffff;
+  outline: none;
+}
+
+.glitchtopia-lang-btn:active {
+  transform: scale(0.95);
+}
+
 .memory-terminal-back-btn {
   position: absolute;
-  top: 1.8%;
+  top: max(1.8%, env(safe-area-inset-top, 0px));
   left: 2.2%;
   z-index: 200;
   pointer-events: auto;
@@ -2515,7 +2530,20 @@ a {
   pointer-events: none;
   user-select: none;
   filter: brightness(0.94) saturate(0.95);
-  transition: filter 220ms ease;
+  transition: filter 220ms ease, opacity 120ms ease;
+}
+
+.memory-chapter-card .memory-card-img.is-normal {
+  position: relative;
+  opacity: 1;
+}
+
+.memory-chapter-card .memory-card-img.is-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
 }
 
 /* Shifted state (Hình 2: 1st click on Phone/Tablet or Hover on PC/Laptop) — vivid colors, no glow */
@@ -2523,7 +2551,13 @@ a {
   transform: translate3d(44%, -2.5%, 0);
 }
 
-.memory-chapter-card.is-shifted img {
+.memory-chapter-card.is-shifted .memory-card-img.is-normal,
+.memory-chapter-card.is-chosen .memory-card-img.is-normal {
+  opacity: 0;
+}
+
+.memory-chapter-card.is-shifted .memory-card-img.is-select {
+  opacity: 1;
   filter: brightness(1.22) saturate(1.38) contrast(1.08);
 }
 
@@ -2532,34 +2566,134 @@ a {
   transform: translate3d(44%, -2.5%, 0);
 }
 
-.memory-chapter-card.is-chosen img {
+.memory-chapter-card.is-chosen .memory-card-img.is-select {
+  opacity: 1;
   filter: brightness(1.36) saturate(1.55) contrast(1.12);
 }
 
-/* Phone (< 640px) card width & horizontal alignment to match cropped viewport */
+/* Exact 1640x2360 proportional coordinates inside .glitchtopia-scene-canvas (locks 1:1 on Phone, Tablet & PC/Laptop) */
 .memory-chapter-card {
-  width: 34.5%;
+  width: 25.4%;
 }
 
-.memory-chapter-card[data-chapter="5"] { top: 15.2%; left: 35.5%; z-index: 10; }
-.memory-chapter-card[data-chapter="4"] { top: 25.4%; left: 32.1%; z-index: 20; }
-.memory-chapter-card[data-chapter="3"] { top: 35.8%; left: 28.7%; z-index: 30; }
-.memory-chapter-card[data-chapter="2"] { top: 46.2%; left: 25.3%; z-index: 40; }
-.memory-chapter-card[data-chapter="1"] { top: 56.6%; left: 21.9%; z-index: 50; }
-.memory-chapter-card[data-chapter="0"] { top: 67.0%; left: 18.5%; z-index: 60; }
+.memory-chapter-card[data-chapter="5"] { top: 15.2%; left: 39.2%; z-index: 1; }
+.memory-chapter-card[data-chapter="4"] { top: 25.4%; left: 36.6%; z-index: 2; }
+.memory-chapter-card[data-chapter="3"] { top: 35.8%; left: 33.9%; z-index: 3; }
+.memory-chapter-card[data-chapter="2"] { top: 46.2%; left: 31.2%; z-index: 4; }
+.memory-chapter-card[data-chapter="1"] { top: 56.6%; left: 28.5%; z-index: 5; }
+.memory-chapter-card[data-chapter="0"] { top: 67.0%; left: 25.8%; z-index: 6; }
 
-/* Tablet & PC/Laptop (>= 640px): exact 1640x2360 proportional coordinates */
-@container portrait-shell (min-width: 640px) {
-  .memory-chapter-card {
-    width: 25.4%;
+.glitchtopia-scene-canvas[data-chosen-chapter]:not([data-chosen-chapter=""]) .memory-chapter-card {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Memory Terminal Chapter Script View (Frameless)
+   ========================================================================== */
+.memory-reader-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 180;
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(
+    180deg,
+    rgba(6, 11, 24, 0.82) 0%,
+    rgba(5, 9, 20, 0.9) 100%
+  );
+  backdrop-filter: blur(7px);
+  animation: memory-reader-fade-in 160ms ease-out;
+}
+
+@keyframes memory-reader-fade-in {
+  from {
+    opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
+}
 
-  .memory-chapter-card[data-chapter="5"] { top: 15.2%; left: 39.2%; z-index: 10; }
-  .memory-chapter-card[data-chapter="4"] { top: 25.4%; left: 36.6%; z-index: 20; }
-  .memory-chapter-card[data-chapter="3"] { top: 35.8%; left: 33.9%; z-index: 30; }
-  .memory-chapter-card[data-chapter="2"] { top: 46.2%; left: 31.2%; z-index: 40; }
-  .memory-chapter-card[data-chapter="1"] { top: 56.6%; left: 28.5%; z-index: 50; }
-  .memory-chapter-card[data-chapter="0"] { top: 67.0%; left: 25.8%; z-index: 60; }
+.memory-reader-scroll {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  padding: max(54px, 7.5%) 6.5% max(36px, 5%);
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(112, 224, 255, 0.35) transparent;
+  user-select: text;
+}
+
+.memory-reader-InlineHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(130, 228, 255, 0.24);
+}
+
+.memory-reader-code {
+  color: #7eeeff;
+  font-family: "Chakra Petch", "Segoe UI", sans-serif;
+  font-size: clamp(18px, 2.5vh, 22px);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.memory-reader-title {
+  margin: 0;
+  color: #f4fbff;
+  font-family: "Playfair Display", "Be Vietnam Pro", serif;
+  font-size: clamp(19px, 2.6vh, 24px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.memory-reader-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.memory-entry-narration {
+  margin: 0;
+  color: rgba(212, 232, 250, 0.86);
+  font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+  font-size: clamp(12.8px, 1.72vh, 14.5px);
+  line-height: 1.65;
+}
+
+.memory-entry-dialogue {
+  margin: 0;
+  font-family: "Be Vietnam Pro", "Segoe UI", sans-serif;
+  font-size: clamp(13px, 1.76vh, 14.8px);
+  line-height: 1.65;
+}
+
+.memory-entry-speaker {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.memory-entry-dialogue.is-xavier .memory-entry-speaker {
+  color: #8cf2ff;
+}
+
+.memory-entry-dialogue.is-mc .memory-entry-speaker {
+  color: #ffb8ce;
+}
+
+.memory-entry-dialogue.is-npc .memory-entry-speaker {
+  color: #8ef5dc;
+}
+
+.memory-entry-text {
+  color: #f6fbff;
 }
 
 @media (prefers-reduced-motion: reduce) {

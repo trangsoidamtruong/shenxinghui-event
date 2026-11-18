@@ -13,12 +13,18 @@ const ROBOT_X3_IMAGE_URL =
   'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794545764/robot-x3.webp';
 const ROBOT_GOLD_IMAGE_URL =
   'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794546027/robot-gold.webp';
+const ROBOT_STOP_IMAGE_URL =
+  'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794833245/robot-stop.webp';
+const ROBOT_RANGE_IMAGE_URL =
+  'https://res.cloudinary.com/trangsoidamtruong/image/upload/v1794838287/robot-range.webp';
 
 let cachedRobotImg: HTMLImageElement | null = null;
 let cachedRobot2Img: HTMLImageElement | null = null;
 let cachedRobot3Img: HTMLImageElement | null = null;
 let cachedRobotX3Img: HTMLImageElement | null = null;
 let cachedRobotGoldImg: HTMLImageElement | null = null;
+let cachedRobotStopImg: HTMLImageElement | null = null;
+let cachedRobotRangeImg: HTMLImageElement | null = null;
 let cachedBgImg: HTMLImageElement | null = null;
 let preloadPromise: Promise<void> | null = null;
 
@@ -26,7 +32,7 @@ export function preloadRobotTouchAssets(): Promise<void> {
   if (preloadPromise) return preloadPromise;
 
   preloadPromise = new Promise((resolve) => {
-    let remaining = 6;
+    let remaining = 8;
     const done = () => {
       remaining -= 1;
       if (remaining <= 0) resolve();
@@ -67,6 +73,18 @@ export function preloadRobotTouchAssets(): Promise<void> {
     robotGold.onload = robotGold.onerror = done;
     robotGold.src = ROBOT_GOLD_IMAGE_URL;
     cachedRobotGoldImg = robotGold;
+
+    const robotStop = new Image();
+    robotStop.decoding = 'async';
+    robotStop.onload = robotStop.onerror = done;
+    robotStop.src = ROBOT_STOP_IMAGE_URL;
+    cachedRobotStopImg = robotStop;
+
+    const robotRange = new Image();
+    robotRange.decoding = 'async';
+    robotRange.onload = robotRange.onerror = done;
+    robotRange.src = ROBOT_RANGE_IMAGE_URL;
+    cachedRobotRangeImg = robotRange;
   });
 
   return preloadPromise;
@@ -122,6 +140,26 @@ function getRobotGoldImage(): HTMLImageElement {
   return cachedRobotGoldImg;
 }
 
+function getRobotStopImage(): HTMLImageElement {
+  if (!cachedRobotStopImg) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = ROBOT_STOP_IMAGE_URL;
+    cachedRobotStopImg = img;
+  }
+  return cachedRobotStopImg;
+}
+
+function getRobotRangeImage(): HTMLImageElement {
+  if (!cachedRobotRangeImg) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = ROBOT_RANGE_IMAGE_URL;
+    cachedRobotRangeImg = img;
+  }
+  return cachedRobotRangeImg;
+}
+
 // ============================================================================
 // Constants & $P Point-Cloud Recognizer Templates (1:1 from index.html)
 // ============================================================================
@@ -139,11 +177,11 @@ const AOE_SLOW_SPEED_MULT = 0.32;
 const OVERLOAD_GLYPHS: readonly GlyphKey[] = ['I', 'U', '♡'];
 const ROBOT_STD_W = 184;
 const ROBOT_STD_W_PHONE = 136;
-const ROBOT_X3_W = 372;
-const ROBOT_X3_W_PHONE = 216;
-const RUSH_COL_STEP = 148;
-const RUSH_COL_STEP_PHONE = 110;
-const RUSH_SPEED = 160;
+const ROBOT_X3_W = 452;
+const ROBOT_X3_W_PHONE = 266;
+const RUSH_COL_STEP = 134;
+const RUSH_COL_STEP_PHONE = 100;
+const RUSH_SPEED = 205;
 const ROBOT_LANES = [490, 630, 770] as const;
 const LANE_REENTRY_X = WIN.x0 + 110;
 const X3_SCREEN_POS: ReadonlyArray<readonly [number, number]> = [
@@ -366,40 +404,406 @@ function cloud(a: CloudPoint[], b: CloudPoint[], st: number): number {
 }
 
 function cloudDist(a: CloudPoint[], b: CloudPoint[]): number {
-  const e = 0.5;
-  const s = Math.floor(Math.pow(N, 1 - e));
+  const step = 2;
   let mn = 1e9;
-  for (let i = 0; i < N; i += s) {
+  for (let i = 0; i < N; i += step) {
     mn = Math.min(mn, cloud(a, b, i), cloud(b, a, i));
   }
   return mn;
 }
 
-const TPL: Record<GlyphKey, CloudPoint[]> = {} as Record<GlyphKey, CloudPoint[]>;
-(Object.keys(G) as GlyphKey[]).forEach((k) => {
+const circCCW: Point2D[] = [...circ].reverse();
+
+const EXTRA_VARIANTS: Partial<Record<GlyphKey, Point2D[][][]>> = {
+  I: [
+    [
+      [
+        [50, 95],
+        [50, 5],
+      ],
+    ],
+  ],
+  '/': [
+    [
+      [
+        [15, 95],
+        [85, 5],
+      ],
+    ],
+    [
+      [
+        [78, 8],
+        [22, 92],
+      ],
+    ],
+    [
+      [
+        [22, 92],
+        [78, 8],
+      ],
+    ],
+  ],
+  '\\': [
+    [
+      [
+        [85, 95],
+        [15, 5],
+      ],
+    ],
+    [
+      [
+        [22, 8],
+        [78, 92],
+      ],
+    ],
+    [
+      [
+        [78, 92],
+        [22, 8],
+      ],
+    ],
+  ],
+  U: [
+    [
+      [
+        [85, 10],
+        [85, 70],
+        [70, 92],
+        [30, 92],
+        [15, 70],
+        [15, 10],
+      ],
+    ],
+    [
+      [
+        [18, 12],
+        [20, 65],
+        [35, 88],
+        [50, 94],
+        [65, 88],
+        [80, 65],
+        [82, 12],
+      ],
+    ],
+  ],
+  O: [[circCCW]],
+  Z: [
+    [
+      [
+        [18, 15],
+        [82, 15],
+        [18, 85],
+        [82, 85],
+      ],
+    ],
+    [
+      [
+        [85, 90],
+        [15, 90],
+        [85, 10],
+        [15, 10],
+      ],
+    ],
+  ],
+  P: [
+    [
+      [
+        [28, 95],
+        [28, 8],
+        [62, 10],
+        [78, 24],
+        [76, 40],
+        [58, 50],
+        [28, 50],
+      ],
+    ],
+    [
+      [
+        [28, 8],
+        [28, 95],
+        [28, 8],
+        [64, 12],
+        [78, 28],
+        [60, 48],
+        [28, 48],
+      ],
+    ],
+    [
+      [
+        [28, 8],
+        [28, 95],
+      ],
+      [
+        [28, 8],
+        [66, 12],
+        [78, 28],
+        [62, 48],
+        [28, 48],
+      ],
+    ],
+  ],
+  '→': [
+    [
+      [
+        [8, 50],
+        [92, 50],
+        [58, 20],
+        [92, 50],
+        [58, 80],
+      ],
+    ],
+    [
+      [
+        [8, 50],
+        [92, 50],
+        [58, 22],
+      ],
+    ],
+    [
+      [
+        [8, 50],
+        [92, 50],
+        [58, 78],
+      ],
+    ],
+    [
+      [
+        [5, 50],
+        [95, 50],
+      ],
+    ],
+  ],
+  '♡': [
+    [
+      [
+        [50, 26],
+        [32, 10],
+        [12, 16],
+        [6, 36],
+        [20, 62],
+        [50, 92],
+        [80, 62],
+        [94, 36],
+        [88, 16],
+        [68, 10],
+        [50, 26],
+      ],
+    ],
+    [
+      [
+        [50, 26],
+        [68, 10],
+        [88, 16],
+        [94, 36],
+        [80, 62],
+        [50, 92],
+        [20, 62],
+        [6, 36],
+        [12, 16],
+        [32, 10],
+        [50, 26],
+      ],
+    ],
+    [
+      [
+        [50, 92],
+        [20, 62],
+        [6, 36],
+        [12, 16],
+        [32, 10],
+        [50, 26],
+        [68, 10],
+        [88, 16],
+        [94, 36],
+        [80, 62],
+        [50, 92],
+      ],
+    ],
+  ],
+  '~': [
+    [
+      [
+        [4, 56],
+        [28, 22],
+        [72, 78],
+        [96, 44],
+      ],
+    ],
+    [
+      [
+        [4, 44],
+        [28, 78],
+        [72, 22],
+        [96, 56],
+      ],
+    ],
+    [
+      [
+        [96, 44],
+        [72, 78],
+        [28, 22],
+        [4, 56],
+      ],
+    ],
+  ],
+  '🐰': [
+    [
+      [
+        [25, 36],
+        [18, 10],
+        [30, 4],
+        [44, 30],
+        [56, 30],
+        [70, 4],
+        [82, 10],
+        [75, 36],
+        [94, 56],
+        [88, 84],
+        [65, 96],
+        [35, 96],
+        [12, 84],
+        [6, 56],
+        [25, 36],
+      ],
+    ],
+    [
+      [...G['🐰'][0]].reverse(),
+    ],
+  ],
+};
+
+function strokesToCloud(strokeList: Point2D[][]): CloudPoint[] {
   const pts: CloudPoint[] = [];
-  G[k].forEach((s, i) => {
+  strokeList.forEach((s, i) => {
     for (let j = 0; j < s.length; j++) {
       pts.push({ x: s[j][0], y: s[j][1], id: i });
     }
   });
-  TPL[k] = norm(pts);
+  return norm(pts);
+}
+
+const TPL_LIST: Record<GlyphKey, CloudPoint[][]> = {} as Record<
+  GlyphKey,
+  CloudPoint[][]
+>;
+(Object.keys(G) as GlyphKey[]).forEach((k) => {
+  const variants: Point2D[][][] = [G[k], ...(EXTRA_VARIANTS[k] ?? [])];
+  TPL_LIST[k] = variants.map(strokesToCloud);
 });
 
 function recognize(
   strokes: Array<Array<{ x: number; y: number }>>,
   allowed: GlyphKey[]
 ): { k: GlyphKey | null; d: number } | null {
-  const pts: CloudPoint[] = [];
-  strokes.forEach((s, i) => s.forEach((p) => pts.push({ x: p.x, y: p.y, id: i })));
-  if (pts.length < 3) return null;
-  const c = norm(pts);
+  const rawPts: CloudPoint[] = [];
+  strokes.forEach((s, i) => {
+    s.forEach((p) => {
+      const prev = rawPts[rawPts.length - 1];
+      if (!prev || prev.id !== i || dist(prev, p) >= 1.5) {
+        rawPts.push({ x: p.x, y: p.y, id: i });
+      }
+    });
+  });
+  if (rawPts.length < 2) return null;
+  if (rawPts.length === 2) {
+    rawPts.splice(1, 0, {
+      x: (rawPts[0].x + rawPts[1].x) * 0.5,
+      y: (rawPts[0].y + rawPts[1].y) * 0.5,
+      id: rawPts[0].id,
+    });
+  }
+
+  let pathLen = 0;
+  let minX = 1e9;
+  let minY = 1e9;
+  let maxX = -1e9;
+  let maxY = -1e9;
+  for (let i = 0; i < rawPts.length; i++) {
+    const p = rawPts[i];
+    if (p.x < minX) minX = p.x;
+    if (p.y < minY) minY = p.y;
+    if (p.x > maxX) maxX = p.x;
+    if (p.y > maxY) maxY = p.y;
+    if (i > 0 && rawPts[i].id === rawPts[i - 1].id) {
+      pathLen += dist(rawPts[i - 1], rawPts[i]);
+    }
+  }
+  if (pathLen < 12) return null;
+
+  const first = rawPts[0];
+  const last = rawPts[rawPts.length - 1];
+  const endDist = dist(first, last);
+  const straightness = endDist / Math.max(pathLen, 1e-6);
+  const dx = last.x - first.x;
+  const dy = last.y - first.y;
+  const absDx = Math.abs(dx);
+  const absDy = Math.abs(dy);
+  const bw = Math.max(maxX - minX, 1);
+  const bh = Math.max(maxY - minY, 1);
+
+  // Fast & reliable geometric classification for straight 1-segment strokes ('I', '/', '\', '→')
+  if (straightness > 0.82) {
+    if (absDy > absDx * 1.65 && allowed.includes('I')) {
+      return { k: 'I', d: 0.35 };
+    }
+    if (absDx > absDy * 1.9 && dx > 0 && allowed.includes('→')) {
+      return { k: '→', d: 0.45 };
+    }
+    const slope = absDy / Math.max(absDx, 1e-6);
+    if (slope >= 0.32 && slope <= 2.9) {
+      const isForwardSlash = (dx < 0 && dy > 0) || (dx > 0 && dy < 0);
+      if (isForwardSlash && allowed.includes('/')) {
+        return { k: '/', d: 0.35 };
+      }
+      if (!isForwardSlash && allowed.includes('\\')) {
+        return { k: '\\', d: 0.35 };
+      }
+    }
+  }
+
+  const c = norm(rawPts);
   let best: GlyphKey | null = null;
   let bd = 1e9;
+
   allowed.forEach((k) => {
-    const d = cloudDist(c, TPL[k]);
-    if (d < bd) {
-      bd = d;
+    // Prevent straight-line glyphs from stealing clearly curved/looped drawings
+    if (
+      (k === 'I' || k === '/' || k === '\\') &&
+      straightness < 0.72
+    ) {
+      return;
+    }
+
+    let kDist = 1e9;
+    for (const tpl of TPL_LIST[k]) {
+      const d = cloudDist(c, tpl);
+      if (d < kDist) kDist = d;
+    }
+
+    // Disambiguate U vs O based on whether top is open vs closed loop
+    if (k === 'U') {
+      const startTop = (first.y - minY) / bh < 0.48;
+      const endTop = (last.y - minY) / bh < 0.48;
+      const openSpan = Math.abs(first.x - last.x) / bw;
+      if (startTop && endTop && openSpan > 0.32 && straightness > 0.22) {
+        kDist *= 0.78;
+      }
+    } else if (k === 'O') {
+      if (endDist / Math.max(bw, bh) < 0.42 && straightness < 0.32) {
+        kDist *= 0.82;
+      }
+    } else if (k === '~') {
+      if (bw > bh * 1.15 && Math.abs(last.x - first.x) / bw > 0.55) {
+        kDist *= 0.82;
+      }
+    } else if (k === '→') {
+      if (dx > 0 && bw > bh * 0.95) {
+        kDist *= 0.84;
+      }
+    }
+
+    if (kDist < bd) {
+      bd = kDist;
       best = k;
     }
   });
@@ -418,13 +822,15 @@ interface RobotEntity {
   s: 0 | 1 | 2;
   pt: number;
   bonus: boolean;
-  kind: 1 | 2 | 3 | 4 | 5;
+  kind: 1 | 2 | 3 | 4 | 5 | 6 | 7;
   hp: number;
   pts: number;
   kb: number;
   kbV: number;
   hitT: number;
   screens?: Array<GlyphKey | null>;
+  stopQueue?: Array<{ x: number; dur: number }>;
+  pauseDur?: number;
   gone?: number;
 }
 
@@ -483,6 +889,8 @@ export function mountRobotTouchGame(
   const robot3Img = getRobot3Image();
   const robotX3Img = getRobotX3Image();
   const robotGoldImg = getRobotGoldImage();
+  const robotStopImg = getRobotStopImage();
+  const robotRangeImg = getRobotRangeImage();
   let currentLang: AppLang = initialLang;
   let scaleX = 1;
   let scaleY = 1;
@@ -493,6 +901,7 @@ export function mountRobotTouchGame(
   let st: 'play' | 'over' = 'play';
   let robots: RobotEntity[] = [];
   let parts: ParticleEntity[] = [];
+  let rangeBlasts: Array<{ x: number; y: number; r: number; t: number; maxT: number }> = [];
   let strokes: Array<Array<{ x: number; y: number }>> = [];
   let cur: Array<{ x: number; y: number }> | null = null;
   let activePointerId: number | null = null;
@@ -546,6 +955,7 @@ export function mountRobotTouchGame(
 
   const getStdRobotW = () => (isPhoneView ? ROBOT_STD_W_PHONE : ROBOT_STD_W);
   const getX3RobotW = () => (isPhoneView ? ROBOT_X3_W_PHONE : ROBOT_X3_W);
+  const getRangeBlastRadius = () => getStdRobotW() * 1.48;
   const getRushColStep = () =>
     isPhoneView ? RUSH_COL_STEP_PHONE : RUSH_COL_STEP;
 
@@ -580,21 +990,25 @@ export function mountRobotTouchGame(
     const al = allowedNow();
     const k = al[Math.floor(Math.random() * al.length)];
     const roll = Math.random();
-    const kind: 1 | 2 | 3 | 4 | 5 =
-      score >= 3 && roll < 0.14
+    const kind: 1 | 2 | 3 | 4 | 5 | 6 | 7 =
+      score >= 3 && roll < 0.12
         ? 4
-        : score >= 2 && roll < 0.3
+        : score >= 2 && roll < 0.24
           ? 3
-          : score >= 1 && roll < 0.52
-            ? 2
-            : score >= 1 && roll < 0.72
-              ? 5
-              : 1;
+          : roll < 0.4
+            ? 6
+            : roll < 0.58
+              ? 7
+              : score >= 1 && roll < 0.72
+                ? 2
+                : score >= 1 && roll < 0.85
+                  ? 5
+                  : 1;
     const hp = kind === 4 || kind === 3 ? 3 : kind === 2 ? 2 : 1;
     const pts =
       kind === 4 || kind === 3
         ? 600
-        : kind === 2
+        : kind === 2 || kind === 6
           ? 400
           : kind === 5
             ? 300
@@ -609,6 +1023,27 @@ export function mountRobotTouchGame(
       screens = [shuffled[0], shuffled[1], shuffled[2]];
     }
 
+    const stop1 =
+      kind === 6
+        ? {
+            x: WIN.x0 + 475 + Math.random() * 50,
+            dur: 1.2 + Math.random() * 0.75,
+          }
+        : null;
+    const stopQueue =
+      kind === 6
+        ? [
+            {
+              x: WIN.x0 + 305 + Math.random() * 50,
+              dur: 1.2 + Math.random() * 0.75,
+            },
+            {
+              x: WIN.x0 + 135 + Math.random() * 45,
+              dur: 1.2 + Math.random() * 0.75,
+            },
+          ]
+        : undefined;
+
     const y = openLanes[Math.floor(Math.random() * openLanes.length)];
 
     robots.push({
@@ -619,8 +1054,9 @@ export function mountRobotTouchGame(
       y,
       k: screens ? (screens[0] as GlyphKey) : k,
       v: 70 + Math.min(score * 3.2, 140) + Math.random() * 25,
-      stopX:
-        Math.random() < 0.8
+      stopX: stop1
+        ? stop1.x
+        : Math.random() < 0.8
           ? WIN.x0 + 130 + Math.random() * (WIN.x1 - WIN.x0 - 280)
           : 0,
       s: 0,
@@ -633,6 +1069,8 @@ export function mountRobotTouchGame(
       kbV: 0,
       hitT: 0,
       screens,
+      stopQueue,
+      pauseDur: stop1 ? stop1.dur : PAUSE,
     });
     return true;
   }
@@ -644,10 +1082,10 @@ export function mountRobotTouchGame(
     lastRushGlyph = k;
 
     const colStep = getRushColStep();
-    const rightMost = robots.reduce((mx, r) => Math.max(mx, r.x), WIN.x1 - 60);
+    const rightMost = robots.reduce((mx, r) => Math.max(mx, r.x), WIN.x1 - 80);
     const baseX = Math.max(
-      WIN.x1 + Math.ceil(getStdRobotW() * 0.55),
-      rightMost + colStep
+      WIN.x1 + Math.ceil(getStdRobotW() * 0.42),
+      rightMost + colStep * 0.88
     );
 
     for (let row = 0; row < ROBOT_LANES.length; row++) {
@@ -776,6 +1214,7 @@ export function mountRobotTouchGame(
     }
     robots = [];
     parts = [];
+    rangeBlasts = [];
     strokes = [];
     cur = null;
     activePointerId = null;
@@ -812,6 +1251,7 @@ export function mountRobotTouchGame(
     }
     robots = [];
     parts = [];
+    rangeBlasts = [];
     strokes = [];
     cur = null;
     activePointerId = null;
@@ -903,12 +1343,14 @@ export function mountRobotTouchGame(
   }
 
   function getRobotGlyphs(r: RobotEntity): GlyphKey[] {
+    if (r.kind === 6 && r.s !== 1) return [];
     return r.screens
       ? r.screens.filter((g): g is GlyphKey => g !== null)
       : [r.k];
   }
 
   function robotHasGlyph(r: RobotEntity, g: GlyphKey): boolean {
+    if (r.kind === 6 && r.s !== 1) return false;
     return r.screens ? r.screens.includes(g) : r.k === g;
   }
 
@@ -929,6 +1371,76 @@ export function mountRobotTouchGame(
     );
   }
 
+  function destroyRobotAndChain(target: RobotEntity): number {
+    const idx = robots.indexOf(target);
+    if (idx === -1) return 0;
+    robots.splice(idx, 1);
+
+    boom(
+      target,
+      target.kind === 4 || target.kind === 7 ? 30 : 26,
+      target.kind === 7
+        ? '#ff5c6c'
+        : target.kind === 4
+          ? '#7df5ff'
+          : target.kind === 3
+            ? '#ff9ef5'
+            : target.kind === 2 || target.kind === 5
+              ? '#ffe082'
+              : '#5cf0ff'
+    );
+    if (target.bonus) {
+      tl += 5;
+      tp = 1;
+      bn.push({ x: target.x, y: target.y, l: 1.2 });
+    }
+    bn.push({
+      x: target.x,
+      y: target.y - (target.bonus ? 42 : 0),
+      l: 1.0,
+      text: `+${target.pts}`,
+      color: '#ffe36e',
+    });
+    score++;
+    points += target.pts;
+    let totalKilledPts = target.pts;
+
+    if (target.kind === 7) {
+      const blastR = getRangeBlastRadius();
+      const targetHitArc =
+        target.hitT > 0 ? Math.sin((target.hitT / 0.34) * Math.PI) : 0;
+      const targetY = target.y - targetHitArc * 12;
+      rangeBlasts.push({
+        x: target.x,
+        y: targetY,
+        r: blastR,
+        t: 0.38,
+        maxT: 0.38,
+      });
+
+      const caught = robots.filter((other) => {
+        if (other === target || other.gone) return false;
+        const otherW = other.kind === 4 ? getX3RobotW() : getStdRobotW();
+        const otherBodyR = otherW * 0.38;
+        if (other.x - otherBodyR * isoX > WIN.x1) return false;
+        const otherHitArc =
+          other.hitT > 0 ? Math.sin((other.hitT / 0.34) * Math.PI) : 0;
+        const otherY = other.y - otherHitArc * 12;
+        const dx = (other.x - target.x) / Math.max(isoX, 0.001);
+        const dy = (otherY - targetY) / Math.max(isoY, 0.001);
+        return Math.hypot(dx, dy) <= blastR + otherBodyR;
+      });
+
+      for (const victim of caught) {
+        if (robots.includes(victim)) {
+          totalKilledPts += destroyRobotAndChain(victim);
+        }
+      }
+    }
+
+    return totalKilledPts;
+  }
+
   function judge() {
     timer = null;
     const al = [...new Set(robots.flatMap(getRobotGlyphs))];
@@ -936,7 +1448,7 @@ export function mountRobotTouchGame(
     strokes = [];
     if (!al.length || !s.length) return;
     const r = recognize(s, al);
-    if (!r || !r.k || r.d > 3.4) {
+    if (!r || !r.k || r.d > 4.4) {
       flash = { t: 0.5, c: '#ff4d6d' };
       hitBubble = null;
       missScribble = { t: 0.6, maxT: 0.6 };
@@ -952,6 +1464,7 @@ export function mountRobotTouchGame(
       let hitKind4Only = false;
       let batchKilledPts = 0;
       for (const t of targets) {
+        if (!robots.includes(t)) continue;
         if (t.kind === 4 && t.screens) {
           const w = getX3RobotW();
           const h = (w * 1442) / 1965;
@@ -977,24 +1490,7 @@ export function mountRobotTouchGame(
           }
           // All 3 screens cleared -> destroy robot-x3
           killedAny = true;
-          boom(t, 30, '#7df5ff');
-          if (t.bonus) {
-            tl += 5;
-            tp = 1;
-            bn.push({ x: t.x, y: t.y, l: 1.2 });
-          }
-          bn.push({
-            x: t.x,
-            y: t.y - (t.bonus ? 42 : 0),
-            l: 1.0,
-            text: `+${t.pts}`,
-            color: '#ffe36e',
-          });
-          const idx = robots.indexOf(t);
-          if (idx !== -1) robots.splice(idx, 1);
-          score++;
-          points += t.pts;
-          batchKilledPts += t.pts;
+          batchKilledPts += destroyRobotAndChain(t);
         } else if (t.hp > 1) {
           t.hp -= 1;
           t.kb = 0.28;
@@ -1013,32 +1509,7 @@ export function mountRobotTouchGame(
           if (t.kind === 3) hitKind3Only = true;
         } else {
           killedAny = true;
-          boom(
-            t,
-            26,
-            t.kind === 3
-              ? '#ff9ef5'
-              : t.kind === 2 || t.kind === 5
-                ? '#ffe082'
-                : '#5cf0ff'
-          );
-          if (t.bonus) {
-            tl += 5;
-            tp = 1;
-            bn.push({ x: t.x, y: t.y, l: 1.2 });
-          }
-          bn.push({
-            x: t.x,
-            y: t.y - (t.bonus ? 42 : 0),
-            l: 1.0,
-            text: `+${t.pts}`,
-            color: '#ffe36e',
-          });
-          const idx = robots.indexOf(t);
-          if (idx !== -1) robots.splice(idx, 1);
-          score++;
-          points += t.pts;
-          batchKilledPts += t.pts;
+          batchKilledPts += destroyRobotAndChain(t);
         }
       }
       if (batchKilledPts > 0) grantKillProgress(batchKilledPts);
@@ -1370,17 +1841,28 @@ export function mountRobotTouchGame(
       emitSkillState(now);
 
       const moveScale = aoeSlowTimer > 0 ? AOE_SLOW_SPEED_MULT : 1;
+      if (isOverloadRush) {
+        const rightMostRush = robots.reduce(
+          (mx, r) => (r.kind === 5 ? Math.max(mx, r.x) : mx),
+          0
+        );
+        if (rightMostRush > 0 && rightMostRush < WIN.x1 - (isPhoneView ? 18 : 26)) {
+          spawnT = Math.min(spawnT, 0.05);
+        } else if (rightMostRush === 0) {
+          spawnT = 0;
+        }
+      }
       spawnT -= dt * (isOverloadRush ? moveScale : 1);
       if (spawnT <= 0) {
         if (isOverloadRush) {
           spawnOverloadCluster();
-          const tightCluster = Math.random() < 0.45;
+          const tightCluster = Math.random() < 0.55;
           const extraGap = tightCluster
             ? isPhoneView
-              ? 18
-              : 22
-            : (isPhoneView ? 76 : 95) + Math.random() * (isPhoneView ? 60 : 75);
-          spawnT = (3 * getRushColStep() + extraGap) / RUSH_SPEED;
+              ? 6
+              : 8
+            : (isPhoneView ? 18 : 24) + Math.random() * (isPhoneView ? 20 : 26);
+          spawnT = (2.65 * getRushColStep() + extraGap) / RUSH_SPEED;
         } else if (spawn()) {
           spawnT = Math.max(0.9, 2.6 - score * 0.07) + Math.random() * 0.6;
         } else {
@@ -1398,7 +1880,18 @@ export function mountRobotTouchGame(
           r.kb = Math.max(0, r.kb - dt);
         } else if (r.s === 1) {
           r.pt += dt;
-          if (r.pt >= PAUSE) r.s = 2;
+          const activePauseDur = r.pauseDur ?? PAUSE;
+          if (r.pt >= activePauseDur) {
+            if (r.kind === 6 && r.stopQueue && r.stopQueue.length > 0) {
+              const nextStop = r.stopQueue.shift()!;
+              r.stopX = nextStop.x;
+              r.pauseDur = nextStop.dur;
+              r.s = 0;
+              r.pt = 0;
+            } else {
+              r.s = 2;
+            }
+          }
         } else {
           r.x -= r.v * moveScale * dt;
           if (r.s === 0 && r.stopX && r.x <= r.stopX) {
@@ -1473,9 +1966,89 @@ export function mountRobotTouchGame(
       ctx.stroke();
       ctx.restore();
     }
+    // Red blast zone circles for robot-range (kind === 7), rendered behind robot sprites
+    const blastRadius = getRangeBlastRadius();
+    robots.forEach((r) => {
+      if (r.kind !== 7) return;
+      const hitArc = r.hitT > 0 ? Math.sin((r.hitT / 0.34) * Math.PI) : 0;
+      const y = r.y - hitArc * 12;
+      ctx.save();
+      ctx.translate(r.x, y);
+      ctx.scale(isoX, isoY);
+
+      ctx.beginPath();
+      ctx.arc(0, 0, blastRadius, 0, Math.PI * 2);
+      ctx.save();
+      ctx.clip();
+
+      const auraGrad = ctx.createRadialGradient(
+        0,
+        0,
+        blastRadius * 0.12,
+        0,
+        0,
+        blastRadius
+      );
+      auraGrad.addColorStop(0, 'rgba(255, 42, 42, 0.02)');
+      auraGrad.addColorStop(0.58, 'rgba(255, 38, 38, 0.06)');
+      auraGrad.addColorStop(0.84, 'rgba(255, 38, 38, 0.19)');
+      auraGrad.addColorStop(1, 'rgba(255, 48, 48, 0.34)');
+      ctx.fillStyle = auraGrad;
+      ctx.fillRect(-blastRadius, -blastRadius, blastRadius * 2, blastRadius * 2);
+
+      // Subtle horizontal scanlines inside the red blast field (matching reference screenshot)
+      ctx.fillStyle = 'rgba(255, 68, 68, 0.065)';
+      for (let sy = -blastRadius; sy <= blastRadius; sy += 6) {
+        ctx.fillRect(-blastRadius, sy, blastRadius * 2, 2);
+      }
+      ctx.restore();
+
+      // Dashed crimson outer ring
+      ctx.strokeStyle = 'rgba(255, 62, 62, 0.88)';
+      ctx.lineWidth = 2.2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.arc(0, 0, blastRadius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.restore();
+    });
+
+    // Expanding crimson shockwaves when a robot-range detonates
+    rangeBlasts.forEach((b) => {
+      b.t -= dt;
+      if (b.t <= 0) return;
+      const p = 1 - b.t / b.maxT;
+      const alpha = Math.max(0, 1 - p);
+      const curR = b.r * (0.94 + p * 0.14);
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.scale(isoX, isoY);
+      const flashGrad = ctx.createRadialGradient(0, 0, curR * 0.1, 0, 0, curR);
+      flashGrad.addColorStop(0, `rgba(255, 110, 110, ${0.32 * alpha})`);
+      flashGrad.addColorStop(0.75, `rgba(255, 58, 58, ${0.42 * alpha})`);
+      flashGrad.addColorStop(1, 'rgba(255, 38, 38, 0)');
+      ctx.fillStyle = flashGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, curR, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(255, 130, 130, ${0.9 * alpha})`;
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.arc(0, 0, curR, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+    rangeBlasts = rangeBlasts.filter((b) => b.t > 0);
+
     robots.forEach((r) => {
       const hasRobotX3 =
         r.kind === 4 && robotX3Img.complete && robotX3Img.naturalWidth > 0;
+      const hasRobotRange =
+        r.kind === 7 && robotRangeImg.complete && robotRangeImg.naturalWidth > 0;
+      const hasRobotStop =
+        r.kind === 6 && robotStopImg.complete && robotStopImg.naturalWidth > 0;
       const hasRobotGold =
         r.kind === 5 && robotGoldImg.complete && robotGoldImg.naturalWidth > 0;
       const hasRobot3 =
@@ -1484,59 +2057,82 @@ export function mountRobotTouchGame(
         r.kind === 2 && robot2Img.complete && robot2Img.naturalWidth > 0;
       const sprite = hasRobotX3
         ? robotX3Img
-        : hasRobotGold
-          ? robotGoldImg
-          : hasRobot3
-            ? robot3Img
-            : hasRobot2
-              ? robot2Img
-              : robotImg;
+        : hasRobotRange
+          ? robotRangeImg
+          : hasRobotStop
+            ? robotStopImg
+            : hasRobotGold
+              ? robotGoldImg
+                : hasRobot3
+                ? robot3Img
+                : hasRobot2
+                  ? robot2Img
+                  : robotImg;
       const natW = sprite.naturalWidth || 300;
       const natH = sprite.naturalHeight || 360;
-      // robot-2.webp:    2048x2048 trimmed 977x1064  at (+582, +480)
-      // robot-3.webp:    2048x2048 trimmed 954x1021  at (+599, +491)
-      // robot-gold.webp: 2048x2048 trimmed 1138x1212 at (+457, +490)
-      // robot-x3.webp:   2048x2048 trimmed 1965x1442 at (+78, +211)
+      // robot-2.webp:     2048x2048 trimmed 977x1064  at (+582, +480)
+      // robot-3.webp:     2048x2048 trimmed 954x1021  at (+599, +491)
+      // robot-gold.webp:  2048x2048 trimmed 1138x1212 at (+457, +490)
+      // robot-stop.webp:  2048x2048 trimmed 865x991   at (+543, +476)
+      // robot-range.webp: 2048x2048 trimmed 1146x1093 at (+504, +401)
+      // robot-x3.webp:    2048x2048 trimmed 1965x1442 at (+78, +211)
       const srcX = hasRobotX3
         ? (78 / 2048) * natW
-        : hasRobotGold
-          ? (457 / 2048) * natW
-          : hasRobot3
-            ? (599 / 2048) * natW
-            : hasRobot2
-              ? (582 / 2048) * natW
-              : 0;
+        : hasRobotRange
+          ? (504 / 2048) * natW
+          : hasRobotStop
+            ? (543 / 2048) * natW
+            : hasRobotGold
+              ? (457 / 2048) * natW
+              : hasRobot3
+                ? (599 / 2048) * natW
+                : hasRobot2
+                  ? (582 / 2048) * natW
+                  : 0;
       const srcY = hasRobotX3
         ? (211 / 2048) * natH
-        : hasRobotGold
-          ? (490 / 2048) * natH
-          : hasRobot3
-            ? (491 / 2048) * natH
-            : hasRobot2
-              ? (480 / 2048) * natH
-              : 0;
+        : hasRobotRange
+          ? (401 / 2048) * natH
+          : hasRobotStop
+            ? (476 / 2048) * natH
+            : hasRobotGold
+              ? (490 / 2048) * natH
+              : hasRobot3
+                ? (491 / 2048) * natH
+                : hasRobot2
+                  ? (480 / 2048) * natH
+                  : 0;
       const srcW = hasRobotX3
         ? (1965 / 2048) * natW
-        : hasRobotGold
-          ? (1138 / 2048) * natW
-          : hasRobot3
-            ? (954 / 2048) * natW
-            : hasRobot2
-              ? (977 / 2048) * natW
-              : natW;
+        : hasRobotRange
+          ? (1146 / 2048) * natW
+          : hasRobotStop
+            ? (865 / 2048) * natW
+            : hasRobotGold
+              ? (1138 / 2048) * natW
+              : hasRobot3
+                ? (954 / 2048) * natW
+                : hasRobot2
+                  ? (977 / 2048) * natW
+                  : natW;
       const srcH = hasRobotX3
         ? (1442 / 2048) * natH
-        : hasRobotGold
-          ? (1212 / 2048) * natH
-          : hasRobot3
-            ? (1021 / 2048) * natH
-            : hasRobot2
-              ? (1064 / 2048) * natH
-              : natH;
+        : hasRobotRange
+          ? (1093 / 2048) * natH
+          : hasRobotStop
+            ? (991 / 2048) * natH
+            : hasRobotGold
+              ? (1212 / 2048) * natH
+              : hasRobot3
+                ? (1021 / 2048) * natH
+                : hasRobot2
+                  ? (1064 / 2048) * natH
+                  : natH;
       const hitArc = r.hitT > 0 ? Math.sin((r.hitT / 0.34) * Math.PI) : 0;
       const y = r.y - hitArc * 12;
       const w = r.kind === 4 ? getX3RobotW() : getStdRobotW();
       const h = (w * srcH) / srcW;
+      const activePauseDur = r.pauseDur ?? PAUSE;
       ctx.save();
       ctx.translate(r.x, y);
       ctx.scale(isoX, isoY);
@@ -1555,17 +2151,40 @@ export function mountRobotTouchGame(
             w * 0.165
           );
         });
-        if (r.s === 1) hourglass(w * 0.44, h * 0.34, 20, 1 - r.pt / PAUSE);
+        if (r.s === 1) hourglass(w * 0.44, h * 0.34, 20, 1 - r.pt / activePauseDur);
         if (r.bonus) badge(-w / 2 - 14, -h / 2 + 8);
       } else {
-        glyph(
-          r.k,
-          -w / 2 +
-            w * (hasRobotGold ? 0.371 : hasRobot3 ? 0.401 : hasRobot2 ? 0.415 : 0.43),
-          -h / 2 + h * (hasRobotGold ? 0.386 : hasRobot3 || hasRobot2 ? 0.505 : 0.5),
-          w * 0.3
-        );
-        if (r.s === 1) hourglass(w * 0.42, h * 0.37, 20, 1 - r.pt / PAUSE);
+        if (r.kind !== 6 || r.s === 1) {
+          glyph(
+            r.k,
+            -w / 2 +
+              w *
+                (hasRobotRange
+                  ? 0.445
+                  : hasRobotStop
+                    ? 0.445
+                    : hasRobotGold
+                      ? 0.371
+                      : hasRobot3
+                        ? 0.401
+                        : hasRobot2
+                          ? 0.415
+                          : 0.43),
+            -h / 2 +
+              h *
+                (hasRobotRange
+                  ? 0.555
+                  : hasRobotStop
+                    ? 0.475
+                    : hasRobotGold
+                      ? 0.386
+                      : hasRobot3 || hasRobot2
+                        ? 0.505
+                        : 0.5),
+            w * 0.3
+          );
+        }
+        if (r.s === 1) hourglass(w * 0.42, h * 0.37, 20, 1 - r.pt / activePauseDur);
         if (r.bonus) badge(-w / 2 - 28, -h / 2 + 8);
       }
       ctx.restore();
